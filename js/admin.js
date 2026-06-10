@@ -247,8 +247,7 @@ function renderMatchsAdmin() {
 
 async function genererRencontres() {
   if (!_tid) { alert('Sélectionne un tournoi d\'abord.'); return; }
-  const msg     = document.getElementById('gen-msg');
-  const terrain = document.getElementById('gen-terrain').value || null;
+  const msg = document.getElementById('gen-msg');
 
   await loadMatchsAdmin();
   const groupes = [...new Set(_equipes.map(e => e.groupe).filter(Boolean))];
@@ -269,7 +268,7 @@ async function genererRencontres() {
           equipe1_id: equipes[i].id,
           equipe2_id: equipes[j].id,
           phase: 'poule', groupe: g,
-          terrain: terrain, statut: 'planifie',
+          statut: 'planifie',
         });
       }
     }

@@ -40,6 +40,10 @@ async function showAdmin() {
   if (user?.email !== SUPER_ADMIN) {
     document.querySelectorAll('.super-admin-only').forEach(el => el.style.display = 'none');
   }
+  // Restaurer le tournoi sélectionné depuis la session précédente
+  const saved = localStorage.getItem('admin_tid');
+  const savedNom = localStorage.getItem('admin_tnom');
+  if (saved) { _tid = saved; updateAdminTitle(savedNom || 'Tournoi'); }
   loadTournois();
 }
 
@@ -101,6 +105,8 @@ async function saveTournoi() {
 
 function selectTournoi(id, nom) {
   _tid = id;
+  localStorage.setItem('admin_tid', id);
+  localStorage.setItem('admin_tnom', nom);
   updateAdminTitle(nom);
   loadTournois();
 }

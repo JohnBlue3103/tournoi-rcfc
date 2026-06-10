@@ -122,15 +122,33 @@ body {
 .tc-meta { font-size: .82rem; color: var(--muted); }
 .tc-cta  { font-size: .85rem; font-weight: 700; color: var(--primary); white-space: nowrap; }
 
-/* ===== TERRAINS PLACEHOLDER ===== */
-.terrains-placeholder {
-  text-align: center;
-  padding: 4rem 1rem 3rem;
-  color: var(--muted);
+/* ===== PLAN TERRAINS ===== */
+.terrains-plan {
+  padding: 1.25rem 1rem 2rem;
+  max-width: 680px;
+  margin: 0 auto;
 }
-.terrains-icon  { font-size: 3rem; margin-bottom: .75rem; }
-.terrains-title { font-weight: 700; font-size: 1rem; color: var(--text); margin-bottom: .35rem; }
-.terrains-sub   { font-size: .9rem; }
+.terrain-section { margin-bottom: 1.75rem; }
+.terrain-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #fff;
+  padding: .5rem 1.4rem .45rem;
+  border-radius: 8px;
+  margin-bottom: .65rem;
+  text-align: center;
+}
+.terrain-header strong { font-size: .95rem; font-weight: 800; letter-spacing: .08em; }
+.terrain-header em     { font-size: .78rem; font-weight: 400; opacity: .85; margin-top: .1rem; }
+.terrain-h  { background: #002b6b; }
+.terrain-k  { background: #1a5e20; }
+.terrain-svg {
+  width: 100%;
+  display: block;
+  border-radius: 14px;
+  box-shadow: 0 4px 18px rgba(0,0,0,.18);
+}
 
 /* ===== TABS ===== */
 .tabs {

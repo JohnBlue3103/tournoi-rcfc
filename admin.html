@@ -100,15 +100,21 @@
     <div class="gen-block">
       <p class="section-title" style="margin-bottom:.4rem">Générer les rencontres de poule</p>
       <p style="font-size:.85rem;color:#666;margin-bottom:.75rem">Crée automatiquement tous les matchs (chaque équipe joue contre toutes les autres de sa poule).</p>
-      <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap">
-        <select id="gen-terrain" style="padding:.5rem .75rem;border:1.5px solid var(--border);border-radius:8px;font-size:.9rem">
-          <option value="">Terrain aléatoire</option>
-          <option value="Honneur">Honneur</option>
-          <option value="Karben">Karben</option>
-        </select>
-        <button class="btn-primary" onclick="genererRencontres()">⚡ Générer tous les matchs</button>
-      </div>
+      <button class="btn-primary" onclick="genererRencontres()">⚡ Générer tous les matchs</button>
       <p id="gen-msg" class="alert hidden" style="margin-top:.5rem"></p>
+    </div>
+
+    <div class="gen-block" style="margin-top:1rem">
+      <p class="section-title" style="margin-bottom:.4rem">Planifier les horaires</p>
+      <p style="font-size:.85rem;color:#666;margin-bottom:.75rem">Matchs de 15 min · 5 min de pause · 2 terrains en parallèle (Honneur + Karben)</p>
+      <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:.5rem">
+          <label style="font-size:.85rem;font-weight:600">Heure de début</label>
+          <input type="time" id="planning-debut" value="09:00" style="padding:.45rem .6rem;border:1.5px solid var(--border);border-radius:8px;font-size:.9rem">
+        </div>
+        <button class="btn-secondary" onclick="planifierHoraires()">🕐 Assigner les horaires</button>
+      </div>
+      <p id="planning-msg" class="alert hidden" style="margin-top:.5rem"></p>
     </div>
 
     <hr style="margin:1.25rem 0;border:none;border-top:1px solid var(--border)">

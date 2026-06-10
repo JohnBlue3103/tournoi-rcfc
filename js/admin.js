@@ -177,7 +177,7 @@ function renderMatchsAdmin() {
 
   const PHASE_ORDER  = ['poule', 'quarts', 'demies', 'petite_finale', 'finale'];
   const PHASE_LABELS = { poule:'Poules', quarts:'Quarts de finale', demies:'Demi-finales', petite_finale:'Petite finale', finale:'Finale' };
-  const TERRAINS     = ['Honneur', 'Karben'];
+  const TERRAINS     = ['Honneur 1', 'Honneur 2', 'Karben 1', 'Karben 2'];
 
   const byPhaseGroupe = {};
   _matchs.forEach(m => {
@@ -263,6 +263,42 @@ async function genererRencontres() {
   const { error } = await sb.from('matchs').insert(inserts);
   if (error) { showMsg(msg, error.message, 'error'); return; }
   showMsg(msg, `${inserts.length} match(s) générés !`, 'success');
+  loadMatchsAdmin();
+}
+
+async function planifierHoraires() {
+  const msg   = document.getElementById('planning-msg');
+  const debut = document.getElementById('planning-debut').value;
+  if (!debut) { showMsg(msg, 'Indique une heure de début.', 'error'); return; }
+
+  // Matchs sans heure assignée, triés par poule puis création
+  const aPlanner = _matchs.filter(m => !m.heure)
+    .sort((a, b) => (a.groupe||'').localeCompare(b.groupe||'') || a.created_at.localeCompare(b.created_at));
+
+  if (!aPlanner.length) { showMsg(msg, 'Tous les matchs ont déjà un horaire.', 'success'); return; }
+
+  // 2 terrains × 2 demi-terrains = 4 matchs simultanés, slot de 20 min
+  const TERRAINS = ['Honneur 1', 'Honneur 2', 'Karben 1', 'Karben 2'];
+  const SLOT_MIN = 20;
+
+  const [hh, mm] = debut.split(':').map(Number);
+  let minutesTotal = hh * 60 + mm;
+  let slotIndex    = 0;
+
+  const updates = aPlanner.map(m => {
+    const terrain = TERRAINS[slotIndex % 4];
+    const h   = Math.floor(minutesTotal / 60);
+    const min = minutesTotal % 60;
+    const heure = `${String(h).padStart(2,'0')}:${String(min).padStart(2,'0')}`;
+
+    slotIndex++;
+    if (slotIndex % 4 === 0) minutesTotal += SLOT_MIN; // avance toutes les 4 matchs
+
+    return sb.from('matchs').update({ heure, terrain }).eq('id', m.id);
+  });
+
+  await Promise.all(updates);
+  showMsg(msg, `${aPlanner.length} match(s) planifié(s) !`, 'success');
   loadMatchsAdmin();
 }
 

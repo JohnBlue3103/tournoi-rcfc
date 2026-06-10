@@ -3,6 +3,7 @@
 let _tournament = null;
 let _equipes    = [];
 let _matchs     = [];
+let _realtimeCh = null;
 
 const PHASE_LABELS = {
   poule:         'Phase de poules',
@@ -13,16 +14,84 @@ const PHASE_LABELS = {
 };
 
 async function init() {
-  const params = new URLSearchParams(location.search);
-  const tid    = params.get('t');
+  const tid = new URLSearchParams(location.search).get('t');
+  if (tid) await loadTournoi(tid);
+  else     await showHome();
+}
 
-  let query = sb.from('tournaments').select('*');
-  if (tid) query = query.eq('id', tid);
-  else     query = query.eq('statut', 'actif').order('created_at', { ascending: false }).limit(1);
+window.addEventListener('popstate', () => {
+  const tid = new URLSearchParams(location.search).get('t');
+  if (tid) loadTournoi(tid);
+  else     showHome();
+});
 
-  const { data: ts } = await query;
+/* ===== ACCUEIL ===== */
+
+async function showHome() {
+  document.getElementById('view-tournoi').classList.add('hidden');
+  document.getElementById('view-home').classList.remove('hidden');
+
+  if (_realtimeCh) { sb.removeChannel(_realtimeCh); _realtimeCh = null; }
+  _tournament = null; _equipes = []; _matchs = [];
+
+  const loading = document.getElementById('home-loading');
+  const list    = document.getElementById('home-list');
+  loading.classList.remove('hidden');
+  list.classList.add('hidden');
+
+  const { data: tournois } = await sb.from('tournaments')
+    .select('*').order('created_at', { ascending: false });
+
+  loading.classList.add('hidden');
+  list.classList.remove('hidden');
+
+  if (!tournois || !tournois.length) {
+    list.innerHTML = '<p class="empty">Aucun tournoi disponible.</p>';
+    return;
+  }
+
+  list.innerHTML = tournois.map(t => {
+    const actif = t.statut === 'actif';
+    const meta  = [t.sport, t.date, t.lieu].filter(Boolean).join(' · ');
+    return `
+    <div class="tournoi-card" onclick="navigateToTournoi('${t.id}')">
+      <div style="flex:1;min-width:0">
+        <div class="tournoi-card-nom">${t.nom}</div>
+        ${meta ? `<div class="tournoi-card-meta">${meta}</div>` : ''}
+      </div>
+      <div style="display:flex;align-items:center;gap:.6rem;flex-shrink:0">
+        <span class="${actif ? 'badge-live' : 'badge-termine'}">${actif ? 'En cours' : 'Terminé'}</span>
+        <span class="tournoi-card-arrow">›</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function navigateToTournoi(tid) {
+  history.pushState(null, '', '?t=' + tid);
+  loadTournoi(tid);
+}
+
+function goHome() {
+  history.pushState(null, '', location.pathname);
+  showHome();
+}
+
+/* ===== TOURNOI ===== */
+
+async function loadTournoi(tid) {
+  document.getElementById('view-home').classList.add('hidden');
+  document.getElementById('view-tournoi').classList.remove('hidden');
+
+  // Reset onglet sur Agenda
+  switchTab('agenda');
+
+  document.getElementById('tab-agenda').innerHTML     = '<p style="padding:2rem;text-align:center;color:#888">Chargement…</p>';
+  document.getElementById('tab-classement').innerHTML = '';
+
+  const { data: ts } = await sb.from('tournaments').select('*').eq('id', tid);
   if (!ts || !ts.length) {
-    document.getElementById('app-loading').textContent = 'Tournoi introuvable.';
+    document.getElementById('tab-agenda').innerHTML = '<p class="empty">Tournoi introuvable.</p>';
     return;
   }
   _tournament = ts[0];
@@ -35,44 +104,97 @@ async function init() {
   _matchs  = matchs  || [];
 
   renderHeader();
+  renderAgenda();
   renderClassements();
-  renderMatchs();
 
-  document.getElementById('app-loading').classList.add('hidden');
-  document.getElementById('app').classList.remove('hidden');
-
-  // Temps réel : mise à jour des scores
-  sb.channel('matchs-live')
+  // Realtime
+  if (_realtimeCh) sb.removeChannel(_realtimeCh);
+  _realtimeCh = sb.channel('matchs-live-' + tid)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'matchs',
         filter: `tournament_id=eq.${_tournament.id}` },
       async () => {
         const { data } = await sb.from('matchs').select('*')
           .eq('tournament_id', _tournament.id).order('heure');
         _matchs = data || [];
+        renderAgenda();
         renderClassements();
-        renderMatchs();
       })
     .subscribe();
 }
 
 function renderHeader() {
-  document.getElementById('t-nom').textContent = _tournament.nom;
+  document.getElementById('t-nom').textContent   = _tournament.nom;
   const parts = [_tournament.sport, _tournament.date, _tournament.lieu].filter(Boolean);
   document.getElementById('t-infos').textContent = parts.join(' · ');
   document.title = _tournament.nom;
 }
 
 function switchTab(tab) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
-  event.target.classList.add('active');
+  document.querySelectorAll('#view-tournoi .tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('#view-tournoi .tab-panel').forEach(p => p.classList.add('hidden'));
+  const btn = document.getElementById('tab-btn-' + tab);
+  if (btn) btn.classList.add('active');
   document.getElementById('tab-' + tab).classList.remove('hidden');
 }
 
-/* ===== CLASSEMENTS PAR POULE ===== */
+/* ===== AGENDA ===== */
+
+function renderAgenda() {
+  const wrap  = document.getElementById('tab-agenda');
+  const eqMap = Object.fromEntries(_equipes.map(e => [e.id, e.nom]));
+
+  if (!_matchs.length) {
+    wrap.innerHTML = '<p class="empty">Aucun match planifié.</p>';
+    return;
+  }
+
+  const byPhase  = {};
+  _matchs.forEach(m => {
+    const key = m.phase + (m.groupe ? '_' + m.groupe : '');
+    (byPhase[key] = byPhase[key] || []).push(m);
+  });
+
+  const sections  = [];
+  const groupes   = [...new Set(_matchs.filter(m => m.phase === 'poule').map(m => m.groupe).filter(Boolean))].sort();
+  groupes.forEach(g => {
+    const list = byPhase['poule_' + g] || [];
+    if (list.length) sections.push({ label: `Poule ${g}`, matchs: list });
+  });
+  ['quarts', 'demies', 'petite_finale', 'finale'].forEach(p => {
+    const list = byPhase[p] || [];
+    if (list.length) sections.push({ label: PHASE_LABELS[p], matchs: list });
+  });
+
+  wrap.innerHTML = sections.map(s => `
+    <p class="phase-title">${s.label}</p>
+    ${s.matchs.map(m => renderMatchCard(m, eqMap)).join('')}
+  `).join('');
+}
+
+function renderMatchCard(m, eqMap) {
+  const e1        = eqMap[m.equipe1_id] || '?';
+  const e2        = eqMap[m.equipe2_id] || '?';
+  const isTermine = m.statut === 'termine';
+  const isEnCours = m.statut === 'en_cours';
+  const scoreStr  = isTermine || isEnCours ? `${m.score1 ?? 0} - ${m.score2 ?? 0}` : 'vs';
+  const metaStr   = [m.heure, m.terrain, m.arbitre ? `🟨 ${m.arbitre}` : null].filter(Boolean).join(' · ');
+  return `
+    <div class="match-card ${m.statut}">
+      <div class="team-name">${e1}</div>
+      <div class="score-box">
+        <div class="score-val">${scoreStr}</div>
+        ${isEnCours ? '<div class="score-meta badge-en-cours">En cours</div>' : ''}
+        ${metaStr   ? `<div class="score-meta">${metaStr}</div>` : ''}
+      </div>
+      <div class="team-name right">${e2}</div>
+    </div>`;
+}
+
+/* ===== CLASSEMENT ===== */
+
 function renderClassements() {
   const groupes = [...new Set(_equipes.map(e => e.groupe).filter(Boolean))].sort();
-  const wrap    = document.getElementById('classements-wrap');
+  const wrap    = document.getElementById('tab-classement');
 
   if (!groupes.length) {
     wrap.innerHTML = '<p class="empty">Aucune équipe enregistrée.</p>';
@@ -94,7 +216,8 @@ function renderClassements() {
               <tr class="${i < 2 ? 'qualifie' : ''}">
                 <td>${r.nom}</td>
                 <td>${r.j}</td><td>${r.v}</td><td>${r.n}</td><td>${r.d}</td>
-                <td>${r.bp}</td><td>${r.bc}</td><td>${r.bp - r.bc >= 0 ? '+' : ''}${r.bp - r.bc}</td>
+                <td>${r.bp}</td><td>${r.bc}</td>
+                <td>${r.bp - r.bc >= 0 ? '+' : ''}${r.bp - r.bc}</td>
                 <td class="pts-col">${r.pts}</td>
               </tr>`).join('')}
           </tbody>
@@ -121,60 +244,6 @@ function calcClassement(groupe) {
   return Object.values(stats).sort((a, b) =>
     b.pts - a.pts || (b.bp - b.bc) - (a.bp - a.bc) || b.bp - a.bp
   );
-}
-
-/* ===== MATCHS ===== */
-function renderMatchs() {
-  const wrap  = document.getElementById('matchs-wrap');
-  const eqMap = Object.fromEntries(_equipes.map(e => [e.id, e.nom]));
-
-  const PHASE_ORDER = ['poule', 'quarts', 'demies', 'petite_finale', 'finale'];
-  const byPhase = {};
-  _matchs.forEach(m => {
-    const key = m.phase + (m.groupe ? '_' + m.groupe : '');
-    (byPhase[key] = byPhase[key] || []).push(m);
-  });
-
-  if (!_matchs.length) {
-    wrap.innerHTML = '<p class="empty">Aucun match planifié.</p>';
-    return;
-  }
-
-  const sections = [];
-
-  // Affiche d'abord les poules par groupe, puis les phases KO dans l'ordre
-  const groupes = [...new Set(_matchs.filter(m => m.phase === 'poule').map(m => m.groupe).filter(Boolean))].sort();
-  groupes.forEach(g => {
-    const list = byPhase['poule_' + g] || [];
-    if (list.length) sections.push({ label: `Poule ${g}`, matchs: list });
-  });
-
-  ['quarts', 'demies', 'petite_finale', 'finale'].forEach(phase => {
-    const list = byPhase[phase] || [];
-    if (list.length) sections.push({ label: PHASE_LABELS[phase], matchs: list });
-  });
-
-  wrap.innerHTML = sections.map(s => `
-    <p class="phase-title">${s.label}</p>
-    ${s.matchs.map(m => {
-      const e1 = eqMap[m.equipe1_id] || '?';
-      const e2 = eqMap[m.equipe2_id] || '?';
-      const isTermine  = m.statut === 'termine';
-      const isEnCours  = m.statut === 'en_cours';
-      const scoreStr   = isTermine || isEnCours ? `${m.score1 ?? 0} - ${m.score2 ?? 0}` : 'vs';
-      const metaStr    = [m.heure, m.terrain, m.arbitre ? `🟨 ${m.arbitre}` : null].filter(Boolean).join(' · ');
-      return `
-        <div class="match-card ${m.statut}">
-          <div class="team-name">${e1}</div>
-          <div class="score-box">
-            <div class="score-val">${scoreStr}</div>
-            ${isEnCours ? '<div class="score-meta badge-en-cours">En cours</div>' : ''}
-            ${metaStr   ? `<div class="score-meta">${metaStr}</div>` : ''}
-          </div>
-          <div class="team-name right">${e2}</div>
-        </div>`;
-    }).join('')}
-  `).join('');
 }
 
 init();

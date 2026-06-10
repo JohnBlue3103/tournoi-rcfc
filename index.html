@@ -3,30 +3,45 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Résultats du tournoi</title>
+  <title>Tournois RCFC</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-<div id="app-loading" style="text-align:center;padding:3rem;color:#666">Chargement…</div>
-
-<div id="app" class="hidden">
+<!-- ACCUEIL -->
+<div id="view-home" class="hidden">
   <header class="header">
-    <h1 id="t-nom"></h1>
-    <p id="t-infos"></p>
+    <h1>⚽ Tournois RCFC</h1>
+    <p>Sélectionne un tournoi pour suivre les résultats</p>
+  </header>
+  <div id="home-loading" style="text-align:center;padding:3rem;color:#666">Chargement…</div>
+  <div id="home-list" class="hidden home-list"></div>
+</div>
+
+<!-- TOURNOI -->
+<div id="view-tournoi" class="hidden">
+  <header class="header header-tournoi">
+    <button class="btn-back" onclick="goHome()">← Retour</button>
+    <div>
+      <h1 id="t-nom"></h1>
+      <p id="t-infos"></p>
+    </div>
   </header>
 
   <div class="tabs">
-    <button class="tab active" onclick="switchTab('poules')">🏆 Classements</button>
-    <button class="tab" onclick="switchTab('matchs')">⚽ Matchs</button>
+    <button class="tab active" id="tab-btn-agenda"     onclick="switchTab('agenda')">📅 Agenda</button>
+    <button class="tab"        id="tab-btn-classement" onclick="switchTab('classement')">🏆 Classement</button>
+    <button class="tab"        id="tab-btn-terrains"   onclick="switchTab('terrains')">📍 Terrains</button>
   </div>
 
-  <div id="tab-poules" class="tab-panel">
-    <div id="classements-wrap"></div>
-  </div>
-
-  <div id="tab-matchs" class="tab-panel hidden">
-    <div id="matchs-wrap"></div>
+  <div id="tab-agenda"     class="tab-panel"></div>
+  <div id="tab-classement" class="tab-panel hidden"></div>
+  <div id="tab-terrains"   class="tab-panel hidden">
+    <div class="terrains-placeholder">
+      <div class="terrains-icon">🗺️</div>
+      <p class="terrains-title">Plan des terrains</p>
+      <p class="terrains-sub">Disponible prochainement</p>
+    </div>
   </div>
 </div>
 

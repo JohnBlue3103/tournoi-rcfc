@@ -266,6 +266,13 @@ async function genererRencontres() {
   loadMatchsAdmin();
 }
 
+async function supprimerTousMatchs() {
+  if (!_tid) return;
+  if (!confirm('Supprimer TOUS les matchs de ce tournoi ?')) return;
+  await sb.from('matchs').delete().eq('tournament_id', _tid);
+  loadMatchsAdmin();
+}
+
 async function planifierHoraires() {
   const msg   = document.getElementById('planning-msg');
   const debut = document.getElementById('planning-debut').value;

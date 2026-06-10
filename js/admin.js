@@ -194,7 +194,7 @@ function renderMatchsAdmin() {
 
   const PHASE_ORDER  = ['poule', 'quarts', 'demies', 'petite_finale', 'finale'];
   const PHASE_LABELS = { poule:'Poules', quarts:'Quarts de finale', demies:'Demi-finales', petite_finale:'Petite finale', finale:'Finale' };
-  const TERRAINS     = ['Honneur 1', 'Honneur 2', 'Karben 1', 'Karben 2'];
+  const TERRAINS     = ['H1', 'H2', 'K1', 'K2'];
   const TOUS_ARBITRES = ['Lucie', 'Fred', 'Audelyne', 'Emmanuel', 'Damien', 'Brice'];
 
   const byPhaseGroupe = {};
@@ -342,45 +342,39 @@ async function planifierHoraires(heureForce) {
   const debut = heureForce || document.getElementById('planning-debut').value;
   if (!debut) { showMsg(msg, 'Indique une heure de début.', 'error'); return; }
 
-  // Matchs sans heure assignée, triés par poule puis création
-  const aPlanner = _matchs.filter(m => !m.heure)
+  // Toujours recharger depuis la DB avant de planifier
+  await loadMatchsAdmin();
+
+  const aPlanner = _matchs
+    .filter(m => m.phase === 'poule' && !m.heure)
     .sort((a, b) => (a.groupe||'').localeCompare(b.groupe||'') || a.created_at.localeCompare(b.created_at));
 
-  if (!aPlanner.length) { showMsg(msg, 'Tous les matchs ont déjà un horaire.', 'success'); return; }
+  if (!aPlanner.length) { showMsg(msg, 'Tous les matchs de poule ont déjà un horaire.', 'success'); return; }
 
-  // 2 terrains × 2 demi-terrains = 4 matchs simultanés, slot de 20 min
-  const TERRAINS  = ['Honneur 1', 'Honneur 2', 'Karben 1', 'Karben 2'];
-  const ARBITRES  = ['Lucie', 'Fred', 'Audelyne', 'Emmanuel'];
-  const SLOT_MIN  = 20;
+  const TERRAINS   = ['H1', 'H2', 'K1', 'K2'];
+  const ARBITRES   = ['Lucie', 'Fred', 'Audelyne', 'Emmanuel'];
+  const SLOT_MIN   = 20;
+  const PAUSE_DEB  = 20 * 60 + 30;
+  const PAUSE_FIN  = 21 * 60 + 30;
 
   const [hh, mm] = debut.split(':').map(Number);
-  let minutesTotal = hh * 60 + mm;
-  let slotIndex    = 0;
+  let mins      = hh * 60 + mm;
+  let slotIdx   = 0;
 
-  const PAUSE_DEBUT = 20 * 60 + 30; // 20:30
-  const PAUSE_FIN   = 21 * 60 + 30; // 21:30
-
-  const updates = aPlanner.map(m => {
-    // Saute la pause si on tombe dedans
-    if (minutesTotal >= PAUSE_DEBUT && minutesTotal < PAUSE_FIN) {
-      minutesTotal = PAUSE_FIN;
-      slotIndex = Math.ceil(slotIndex / 4) * 4; // repart sur un slot propre
+  for (const m of aPlanner) {
+    if (mins >= PAUSE_DEB && mins < PAUSE_FIN) {
+      mins = PAUSE_FIN;
+      slotIdx = Math.ceil(slotIdx / 4) * 4;
     }
+    const terrain = TERRAINS[slotIdx % 4];
+    const arbitre = ARBITRES[slotIdx % 4];
+    const heure   = `${String(Math.floor(mins/60)).padStart(2,'0')}:${String(mins%60).padStart(2,'0')}`;
+    slotIdx++;
+    if (slotIdx % 4 === 0) mins += SLOT_MIN;
+    await sb.from('matchs').update({ heure, terrain, arbitre }).eq('id', m.id);
+  }
 
-    const terrain = TERRAINS[slotIndex % 4];
-    const arbitre = ARBITRES[slotIndex % 4];
-    const h   = Math.floor(minutesTotal / 60);
-    const min = minutesTotal % 60;
-    const heure = `${String(h).padStart(2,'0')}:${String(min).padStart(2,'0')}`;
-
-    slotIndex++;
-    if (slotIndex % 4 === 0) minutesTotal += SLOT_MIN;
-
-    return sb.from('matchs').update({ heure, terrain, arbitre }).eq('id', m.id);
-  });
-
-  await Promise.all(updates);
-  showMsg(msg, `${aPlanner.length} match(s) planifié(s) !`, 'success');
+  showMsg(msg, `${aPlanner.length} match(s) planifié(s) à partir de ${debut} !`, 'success');
   loadMatchsAdmin();
 }
 

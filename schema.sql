@@ -30,8 +30,12 @@ create table matchs (
   heure text,
   terrain text,
   statut text default 'planifie',
+  arbitre text,
   created_at timestamptz default now()
 );
+
+-- Si la table existe déjà, ajoute la colonne :
+-- ALTER TABLE matchs ADD COLUMN IF NOT EXISTS arbitre text;
 
 -- Lecture publique
 alter table tournaments enable row level security;

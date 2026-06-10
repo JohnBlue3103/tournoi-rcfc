@@ -184,6 +184,7 @@ function renderMatchsAdmin() {
   const PHASE_ORDER  = ['poule', 'quarts', 'demies', 'petite_finale', 'finale'];
   const PHASE_LABELS = { poule:'Poules', quarts:'Quarts de finale', demies:'Demi-finales', petite_finale:'Petite finale', finale:'Finale' };
   const TERRAINS     = ['Honneur 1', 'Honneur 2', 'Karben 1', 'Karben 2'];
+  const TOUS_ARBITRES = ['Lucie', 'Fred', 'Audelyne', 'Emmanuel', 'Damien', 'Brice'];
 
   const byPhaseGroupe = {};
   _matchs.forEach(m => {
@@ -222,6 +223,13 @@ function renderMatchsAdmin() {
             <input type="number" min="0" id="s1-${m.id}" value="${m.score1??0}" style="width:48px;text-align:center;padding:.3rem;border:1.5px solid var(--border);border-radius:6px;font-size:1rem;font-weight:700">
             <span style="font-weight:700;color:var(--muted)">–</span>
             <input type="number" min="0" id="s2-${m.id}" value="${m.score2??0}" style="width:48px;text-align:center;padding:.3rem;border:1.5px solid var(--border);border-radius:6px;font-size:1rem;font-weight:700">
+          </div>
+          <div style="display:flex;align-items:center;gap:.4rem">
+            <span style="font-size:.8rem;color:var(--muted)">🟨</span>
+            <select id="ar-${m.id}" style="padding:.3rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-size:.85rem">
+              <option value="">— Arbitre —</option>
+              ${TOUS_ARBITRES.map(a=>`<option value="${a}" ${m.arbitre===a?'selected':''}>${a}</option>`).join('')}
+            </select>
           </div>
           <select id="st-${m.id}" style="padding:.3rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-size:.82rem">
             <option value="planifie" ${m.statut==='planifie'?'selected':''}>Planifié</option>
@@ -291,8 +299,9 @@ async function planifierHoraires() {
   if (!aPlanner.length) { showMsg(msg, 'Tous les matchs ont déjà un horaire.', 'success'); return; }
 
   // 2 terrains × 2 demi-terrains = 4 matchs simultanés, slot de 20 min
-  const TERRAINS = ['Honneur 1', 'Honneur 2', 'Karben 1', 'Karben 2'];
-  const SLOT_MIN = 20;
+  const TERRAINS  = ['Honneur 1', 'Honneur 2', 'Karben 1', 'Karben 2'];
+  const ARBITRES  = ['Lucie', 'Fred', 'Audelyne', 'Emmanuel'];
+  const SLOT_MIN  = 20;
 
   const [hh, mm] = debut.split(':').map(Number);
   let minutesTotal = hh * 60 + mm;
@@ -309,6 +318,7 @@ async function planifierHoraires() {
     }
 
     const terrain = TERRAINS[slotIndex % 4];
+    const arbitre = ARBITRES[slotIndex % 4];
     const h   = Math.floor(minutesTotal / 60);
     const min = minutesTotal % 60;
     const heure = `${String(h).padStart(2,'0')}:${String(min).padStart(2,'0')}`;
@@ -316,7 +326,7 @@ async function planifierHoraires() {
     slotIndex++;
     if (slotIndex % 4 === 0) minutesTotal += SLOT_MIN;
 
-    return sb.from('matchs').update({ heure, terrain }).eq('id', m.id);
+    return sb.from('matchs').update({ heure, terrain, arbitre }).eq('id', m.id);
   });
 
   await Promise.all(updates);
@@ -351,7 +361,8 @@ async function saveMatch(id) {
   const statut  = document.getElementById('st-'  + id).value;
   const heure   = document.getElementById('h-'   + id).value || null;
   const terrain = document.getElementById('tr-'  + id).value || null;
-  await sb.from('matchs').update({ score1, score2, statut, heure, terrain }).eq('id', id);
+  const arbitre = document.getElementById('ar-'  + id)?.value || null;
+  await sb.from('matchs').update({ score1, score2, statut, heure, terrain, arbitre }).eq('id', id);
   loadMatchsAdmin();
 }
 

@@ -162,7 +162,7 @@ function renderMatchs() {
       const isTermine  = m.statut === 'termine';
       const isEnCours  = m.statut === 'en_cours';
       const scoreStr   = isTermine || isEnCours ? `${m.score1 ?? 0} - ${m.score2 ?? 0}` : 'vs';
-      const metaStr    = [m.heure, m.terrain].filter(Boolean).join(' · ');
+      const metaStr    = [m.heure, m.terrain, m.arbitre ? `🟨 ${m.arbitre}` : null].filter(Boolean).join(' · ');
       return `
         <div class="match-card ${m.statut}">
           <div class="team-name">${e1}</div>

@@ -31,9 +31,15 @@ async function checkSession() {
   if (session) showAdmin();
 }
 
-function showAdmin() {
+const SUPER_ADMIN = 'john.blue3103@gmail.com';
+
+async function showAdmin() {
   document.getElementById('view-login').classList.add('hidden');
   document.getElementById('view-admin').classList.remove('hidden');
+  const { data: { user } } = await sb.auth.getUser();
+  if (user?.email !== SUPER_ADMIN) {
+    document.querySelectorAll('.super-admin-only').forEach(el => el.style.display = 'none');
+  }
   loadTournois();
 }
 

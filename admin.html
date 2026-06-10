@@ -118,6 +118,22 @@
       <p id="planning-msg" class="alert hidden" style="margin-top:.5rem"></p>
     </div>
 
+    <div class="gen-block" style="margin-top:1rem">
+      <p class="section-title" style="margin-bottom:.4rem">🥇 Générer les phases finales</p>
+      <p style="font-size:.85rem;color:#666;margin-bottom:.75rem">Crée la structure du tableau final avec des équipes à définir.</p>
+      <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:.5rem">
+          <label style="font-size:.85rem;font-weight:600">Équipes qualifiées</label>
+          <select id="phases-nb" style="padding:.45rem .6rem;border:1.5px solid var(--border);border-radius:8px;font-size:.9rem">
+            <option value="8">8 équipes (quarts)</option>
+            <option value="4">4 équipes (demies)</option>
+          </select>
+        </div>
+        <button class="btn-secondary" onclick="genererPhasesFinales()">🥇 Générer le tableau</button>
+      </div>
+      <p id="phases-msg" class="alert hidden" style="margin-top:.5rem"></p>
+    </div>
+
     <hr style="margin:1.25rem 0;border:none;border-top:1px solid var(--border)">
     <p class="section-title">Ajouter un match manuellement</p>
     <div class="form-row">

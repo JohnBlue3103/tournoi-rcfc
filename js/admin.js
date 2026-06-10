@@ -204,9 +204,19 @@ function renderMatchsAdmin() {
     ${byPhaseGroupe[s.key].map(m => `
       <div class="match-edit-card" id="card-${m.id}">
         <div class="match-edit-teams">
-          <span class="item-label">${eqMap[m.equipe1_id]||'?'}</span>
-          <span style="color:var(--muted);font-weight:700;margin:0 .5rem">vs</span>
-          <span class="item-label">${eqMap[m.equipe2_id]||'?'}</span>
+          ${m.phase === 'poule'
+            ? `<span class="item-label">${eqMap[m.equipe1_id]||'?'}</span>
+               <span style="color:var(--muted);font-weight:700;margin:0 .5rem">vs</span>
+               <span class="item-label">${eqMap[m.equipe2_id]||'?'}</span>`
+            : `<select id="eq1-${m.id}" style="padding:.3rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-size:.85rem;max-width:130px">
+                 <option value="">— Équipe 1 —</option>
+                 ${_equipes.map(e=>`<option value="${e.id}" ${m.equipe1_id===e.id?'selected':''}>${e.nom}</option>`).join('')}
+               </select>
+               <span style="color:var(--muted);font-weight:700;margin:0 .4rem">vs</span>
+               <select id="eq2-${m.id}" style="padding:.3rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-size:.85rem;max-width:130px">
+                 <option value="">— Équipe 2 —</option>
+                 ${_equipes.map(e=>`<option value="${e.id}" ${m.equipe2_id===e.id?'selected':''}>${e.nom}</option>`).join('')}
+               </select>`}
           <span class="status-badge status-${m.statut}" style="margin-left:.5rem">${m.statut.replace('_',' ')}</span>
         </div>
         <div class="match-edit-fields">
@@ -287,6 +297,26 @@ async function genererRencontres() {
   const { error } = await sb.from('matchs').insert(inserts);
   if (error) { showMsg(msg, error.message, 'error'); return; }
   showMsg(msg, `${inserts.length} match(s) générés !`, 'success');
+  loadMatchsAdmin();
+}
+
+async function genererPhasesFinales() {
+  if (!_tid) { alert('Sélectionne un tournoi d\'abord.'); return; }
+  const msg = document.getElementById('phases-msg');
+  const nb  = parseInt(document.getElementById('phases-nb').value) || 8;
+
+  const existants = _matchs.filter(m => ['quarts','demies','petite_finale','finale'].includes(m.phase));
+  if (existants.length) { showMsg(msg, 'Structure déjà générée. Supprime les matchs KO d\'abord.', 'error'); return; }
+
+  const inserts = [];
+  if (nb === 8) for (let i = 0; i < 4; i++) inserts.push({ tournament_id: _tid, phase: 'quarts', statut: 'planifie' });
+  for (let i = 0; i < 2; i++) inserts.push({ tournament_id: _tid, phase: 'demies', statut: 'planifie' });
+  inserts.push({ tournament_id: _tid, phase: 'petite_finale', statut: 'planifie' });
+  inserts.push({ tournament_id: _tid, phase: 'finale', statut: 'planifie' });
+
+  const { error } = await sb.from('matchs').insert(inserts);
+  if (error) { showMsg(msg, error.message, 'error'); return; }
+  showMsg(msg, `Tableau généré (${nb} équipes) !`, 'success');
   loadMatchsAdmin();
 }
 
@@ -374,7 +404,12 @@ async function saveMatch(id) {
   const arbitre = document.getElementById('ar-'  + id)?.value || null;
   const bonus1  = parseInt(document.getElementById('b1-' + id)?.value) || 0;
   const bonus2  = parseInt(document.getElementById('b2-' + id)?.value) || 0;
-  await sb.from('matchs').update({ score1, score2, statut, heure, terrain, arbitre, bonus1, bonus2 }).eq('id', id);
+  const update  = { score1, score2, statut, heure, terrain, arbitre, bonus1, bonus2 };
+  const eq1sel  = document.getElementById('eq1-' + id);
+  const eq2sel  = document.getElementById('eq2-' + id);
+  if (eq1sel) update.equipe1_id = eq1sel.value || null;
+  if (eq2sel) update.equipe2_id = eq2sel.value || null;
+  await sb.from('matchs').update(update).eq('id', id);
   loadMatchsAdmin();
 }
 

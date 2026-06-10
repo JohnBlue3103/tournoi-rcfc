@@ -232,9 +232,9 @@ function renderPhaseFinales() {
     return `
       <div class="bracket-phase">
         <p class="bracket-phase-title">${KO_LABELS[phase]}</p>
-        ${matchs.map(m => {
-          const e1  = eqMap[m.equipe1_id] || 'À définir';
-          const e2  = eqMap[m.equipe2_id] || 'À définir';
+        ${matchs.map((m, idx) => {
+          const e1  = eqMap[m.equipe1_id] || `Équipe ${idx * 2 + 1}`;
+          const e2  = eqMap[m.equipe2_id] || `Équipe ${idx * 2 + 2}`;
           const isT = m.statut === 'termine';
           const isE = m.statut === 'en_cours';
           const score = isT || isE ? `${m.score1 ?? 0} – ${m.score2 ?? 0}` : 'vs';

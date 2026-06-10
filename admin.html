@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin — Tournoi</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="view-login" class="login-wrap">
+  <div class="login-card">
+    <h2>⚽ Admin Tournoi</h2>
+    <div class="form-group">
+      <label>Email</label>
+      <input id="login-email" type="email" placeholder="admin@rcfc.fr">
+    </div>
+    <div class="form-group">
+      <label>Mot de passe</label>
+      <input id="login-pwd" type="password" placeholder="••••••••">
+    </div>
+    <p id="login-err" class="alert alert-error hidden"></p>
+    <button class="btn-primary" style="width:100%" onclick="doLogin()">Se connecter</button>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div id="view-admin" class="hidden">
+  <div class="admin-topbar">
+    <h1 id="admin-titre">Admin Tournoi</h1>
+    <button onclick="doLogout()">Déconnexion</button>
+  </div>
+
+  <div class="admin-tabs">
+    <button class="admin-tab active" id="atab-tournoi" onclick="switchAdminTab('tournoi')">🏆 Tournoi</button>
+    <button class="admin-tab" id="atab-equipes" onclick="switchAdminTab('equipes')">👕 Équipes</button>
+    <button class="admin-tab" id="atab-matchs" onclick="switchAdminTab('matchs')">⚽ Matchs</button>
+    <button class="admin-tab" id="atab-qr" onclick="switchAdminTab('qr')">📱 QR Code</button>
+  </div>
+
+  <!-- TOURNOI -->
+  <div id="panel-tournoi" class="page-section">
+    <p class="section-title">Créer / modifier le tournoi</p>
+    <input type="hidden" id="t-id">
+    <div class="form-row">
+      <div class="form-group">
+        <label>Nom du tournoi *</label>
+        <input id="t-nom-input" type="text" placeholder="Tournoi RCFC 2025">
+      </div>
+      <div class="form-group">
+        <label>Sport</label>
+        <input id="t-sport" type="text" placeholder="Football" value="Football">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Date</label>
+        <input id="t-date" type="date">
+      </div>
+      <div class="form-group">
+        <label>Lieu</label>
+        <input id="t-lieu" type="text" placeholder="Stade municipal de Ramonville">
+      </div>
+    </div>
+    <p id="t-msg" class="alert hidden"></p>
+    <button class="btn-primary" onclick="saveTournoi()">💾 Enregistrer</button>
+
+    <div id="tournois-existants" style="margin-top:1.5rem">
+      <p class="section-title">Tournois existants</p>
+      <div id="tournois-list"></div>
+    </div>
+  </div>
+
+  <!-- ÉQUIPES -->
+  <div id="panel-equipes" class="page-section hidden">
+    <p class="section-title">Ajouter une équipe</p>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Nom de l'équipe *</label>
+        <input id="eq-nom" type="text" placeholder="FC Ramonville">
+      </div>
+      <div class="form-group">
+        <label>Poule (A, B, C…)</label>
+        <input id="eq-groupe" type="text" placeholder="A" maxlength="1" style="text-transform:uppercase">
+      </div>
+    </div>
+    <p id="eq-msg" class="alert hidden"></p>
+    <button class="btn-primary" onclick="addEquipe()">➕ Ajouter</button>
+
+    <div style="margin-top:1.25rem">
+      <p class="section-title">Équipes inscrites</p>
+      <div id="equipes-list"><p class="empty">Aucune équipe.</p></div>
+    </div>
+  </div>
+
+  <!-- MATCHS -->
+  <div id="panel-matchs" class="page-section hidden">
+    <p class="section-title">Planifier un match</p>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Équipe 1 *</label>
+        <select id="m-eq1"><option value="">— Choisir —</option></select>
+      </div>
+      <div class="form-group">
+        <label>Équipe 2 *</label>
+        <select id="m-eq2"><option value="">— Choisir —</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Phase</label>
+        <select id="m-phase">
+          <option value="poule">Phase de poules</option>
+          <option value="quarts">Quarts de finale</option>
+          <option value="demies">Demi-finales</option>
+          <option value="petite_finale">Petite finale</option>
+          <option value="finale">Finale</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Poule (si phase de poules)</label>
+        <input id="m-groupe" type="text" placeholder="A" maxlength="1" style="text-transform:uppercase">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Heure</label>
+        <input id="m-heure" type="time">
+      </div>
+      <div class="form-group">
+        <label>Terrain</label>
+        <input id="m-terrain" type="text" placeholder="Terrain 1">
+      </div>
+    </div>
+    <p id="m-msg" class="alert hidden"></p>
+    <button class="btn-primary" onclick="addMatch()">➕ Planifier</button>
+
+    <div style="margin-top:1.5rem">
+      <p class="section-title">Saisir les scores</p>
+      <div id="matchs-admin-list"><p class="empty">Aucun match planifié.</p></div>
+    </div>
+  </div>
+
+  <!-- QR CODE -->
+  <div id="panel-qr" class="page-section hidden">
+    <p class="section-title">QR Code public</p>
+    <p style="color:#666;font-size:.9rem;margin-bottom:1rem">
+      Imprimez ce QR code et affichez-le sur le terrain. Les spectateurs le scannent pour voir les résultats en direct.
+    </p>
+    <div id="qr-select-warn" class="alert alert-error hidden">Sélectionne d'abord un tournoi dans l'onglet "Tournoi".</div>
+    <div class="qr-section">
+      <div id="qr-canvas-wrap"></div>
+      <p id="qr-url-display" class="qr-url"></p>
+      <button class="btn-secondary" onclick="downloadQR()">⬇ Télécharger PNG</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>

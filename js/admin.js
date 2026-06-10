@@ -44,7 +44,9 @@ async function showAdmin() {
   const saved = localStorage.getItem('admin_tid');
   const savedNom = localStorage.getItem('admin_tnom');
   if (saved) { _tid = saved; updateAdminTitle(savedNom || 'Tournoi'); }
+  const savedTab = localStorage.getItem('admin_tab') || 'tournoi';
   loadTournois();
+  switchAdminTab(savedTab);
 }
 
 /* ===== TABS ===== */
@@ -53,6 +55,7 @@ function switchAdminTab(tab) {
   document.querySelectorAll('.page-section').forEach(p => p.classList.add('hidden'));
   document.getElementById('atab-' + tab).classList.add('active');
   document.getElementById('panel-' + tab).classList.remove('hidden');
+  localStorage.setItem('admin_tab', tab);
   if (tab === 'equipes') loadEquipes();
   if (tab === 'matchs')  loadMatchsAdmin();
   if (tab === 'qr')      renderQR();
@@ -302,8 +305,9 @@ async function genererRencontres() {
   if (!inserts.length) { showMsg(msg, 'Tous les matchs de poule existent déjà.', 'success'); return; }
   const { error } = await sb.from('matchs').insert(inserts);
   if (error) { showMsg(msg, error.message, 'error'); return; }
-  showMsg(msg, `${inserts.length} match(s) générés !`, 'success');
-  loadMatchsAdmin();
+  showMsg(msg, `${inserts.length} match(s) générés — planification en cours…`, 'success');
+  await loadMatchsAdmin();
+  await planifierHoraires('17:45');
 }
 
 async function genererPhasesFinales() {
@@ -333,9 +337,9 @@ async function supprimerTousMatchs() {
   loadMatchsAdmin();
 }
 
-async function planifierHoraires() {
+async function planifierHoraires(heureForce) {
   const msg   = document.getElementById('planning-msg');
-  const debut = document.getElementById('planning-debut').value;
+  const debut = heureForce || document.getElementById('planning-debut').value;
   if (!debut) { showMsg(msg, 'Indique une heure de début.', 'error'); return; }
 
   // Matchs sans heure assignée, triés par poule puis création

@@ -298,14 +298,23 @@ async function planifierHoraires() {
   let minutesTotal = hh * 60 + mm;
   let slotIndex    = 0;
 
+  const PAUSE_DEBUT = 20 * 60 + 30; // 20:30
+  const PAUSE_FIN   = 21 * 60 + 30; // 21:30
+
   const updates = aPlanner.map(m => {
+    // Saute la pause si on tombe dedans
+    if (minutesTotal >= PAUSE_DEBUT && minutesTotal < PAUSE_FIN) {
+      minutesTotal = PAUSE_FIN;
+      slotIndex = Math.ceil(slotIndex / 4) * 4; // repart sur un slot propre
+    }
+
     const terrain = TERRAINS[slotIndex % 4];
     const h   = Math.floor(minutesTotal / 60);
     const min = minutesTotal % 60;
     const heure = `${String(h).padStart(2,'0')}:${String(min).padStart(2,'0')}`;
 
     slotIndex++;
-    if (slotIndex % 4 === 0) minutesTotal += SLOT_MIN; // avance toutes les 4 matchs
+    if (slotIndex % 4 === 0) minutesTotal += SLOT_MIN;
 
     return sb.from('matchs').update({ heure, terrain }).eq('id', m.id);
   });

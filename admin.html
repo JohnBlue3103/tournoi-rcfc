@@ -96,7 +96,23 @@
 
   <!-- MATCHS -->
   <div id="panel-matchs" class="page-section hidden">
-    <p class="section-title">Planifier un match</p>
+
+    <div class="gen-block">
+      <p class="section-title" style="margin-bottom:.4rem">Générer les rencontres de poule</p>
+      <p style="font-size:.85rem;color:#666;margin-bottom:.75rem">Crée automatiquement tous les matchs (chaque équipe joue contre toutes les autres de sa poule).</p>
+      <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap">
+        <select id="gen-terrain" style="padding:.5rem .75rem;border:1.5px solid var(--border);border-radius:8px;font-size:.9rem">
+          <option value="">Terrain aléatoire</option>
+          <option value="Honneur">Honneur</option>
+          <option value="Karben">Karben</option>
+        </select>
+        <button class="btn-primary" onclick="genererRencontres()">⚡ Générer tous les matchs</button>
+      </div>
+      <p id="gen-msg" class="alert hidden" style="margin-top:.5rem"></p>
+    </div>
+
+    <hr style="margin:1.25rem 0;border:none;border-top:1px solid var(--border)">
+    <p class="section-title">Ajouter un match manuellement</p>
     <div class="form-row">
       <div class="form-group">
         <label>Équipe 1 *</label>

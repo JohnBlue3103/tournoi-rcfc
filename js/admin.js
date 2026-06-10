@@ -173,41 +173,97 @@ async function loadMatchsAdmin() {
 function renderMatchsAdmin() {
   const el    = document.getElementById('matchs-admin-list');
   const eqMap = Object.fromEntries(_equipes.map(e => [e.id, e.nom]));
-  if (!_matchs.length) { el.innerHTML = '<p class="empty">Aucun match planifié.</p>'; return; }
+  if (!_matchs.length) { el.innerHTML = '<p class="empty">Aucun match. Utilise "Générer tous les matchs" ou ajoute-en un manuellement.</p>'; return; }
 
-  const PHASE_ORDER = ['poule', 'quarts', 'demies', 'petite_finale', 'finale'];
-  const PHASE_LABELS = { poule:'Poules', quarts:'Quarts', demies:'Demies', petite_finale:'Petite finale', finale:'Finale' };
+  const PHASE_ORDER  = ['poule', 'quarts', 'demies', 'petite_finale', 'finale'];
+  const PHASE_LABELS = { poule:'Poules', quarts:'Quarts de finale', demies:'Demi-finales', petite_finale:'Petite finale', finale:'Finale' };
+  const TERRAINS     = ['Honneur', 'Karben'];
 
-  const byPhase = {};
+  const byPhaseGroupe = {};
   _matchs.forEach(m => {
-    const key = m.phase;
-    (byPhase[key] = byPhase[key] || []).push(m);
+    const key = m.phase === 'poule' ? `poule_${m.groupe||'?'}` : m.phase;
+    (byPhaseGroupe[key] = byPhaseGroupe[key] || []).push(m);
   });
 
-  el.innerHTML = PHASE_ORDER.filter(p => byPhase[p]).map(phase => `
-    <p class="groupe-title" style="margin:.75rem 0 .35rem">${PHASE_LABELS[phase]}</p>
-    ${byPhase[phase].map(m => `
-      <div class="item-row" style="flex-wrap:wrap;gap:.5rem">
-        <div style="flex:1;min-width:180px">
-          <div class="item-label">${eqMap[m.equipe1_id]||'?'} vs ${eqMap[m.equipe2_id]||'?'}</div>
-          <div class="item-sub">${[m.heure, m.terrain, m.groupe ? 'Poule '+m.groupe : ''].filter(Boolean).join(' · ')}
-            <span class="status-badge status-${m.statut}">${m.statut.replace('_',' ')}</span>
-          </div>
+  const sections = [];
+  const groupes = [...new Set(_matchs.filter(m=>m.phase==='poule').map(m=>m.groupe||'?'))].sort();
+  groupes.forEach(g => { if (byPhaseGroupe[`poule_${g}`]) sections.push({ label:`Poule ${g}`, key:`poule_${g}` }); });
+  ['quarts','demies','petite_finale','finale'].forEach(p => { if (byPhaseGroupe[p]) sections.push({ label:PHASE_LABELS[p], key:p }); });
+
+  el.innerHTML = sections.map(s => `
+    <p class="groupe-title" style="margin:1rem 0 .4rem">${s.label}</p>
+    ${byPhaseGroupe[s.key].map(m => `
+      <div class="match-edit-card" id="card-${m.id}">
+        <div class="match-edit-teams">
+          <span class="item-label">${eqMap[m.equipe1_id]||'?'}</span>
+          <span style="color:var(--muted);font-weight:700;margin:0 .5rem">vs</span>
+          <span class="item-label">${eqMap[m.equipe2_id]||'?'}</span>
+          <span class="status-badge status-${m.statut}" style="margin-left:.5rem">${m.statut.replace('_',' ')}</span>
         </div>
-        <div class="score-editor">
-          <input type="number" min="0" value="${m.score1 ?? 0}" id="s1-${m.id}" style="width:52px">
-          <span class="score-sep">–</span>
-          <input type="number" min="0" value="${m.score2 ?? 0}" id="s2-${m.id}" style="width:52px">
+        <div class="match-edit-fields">
+          <div style="display:flex;align-items:center;gap:.4rem">
+            <span style="font-size:.8rem;color:var(--muted)">🕐</span>
+            <input type="time" id="h-${m.id}" value="${m.heure||''}" style="width:100px;padding:.3rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-size:.85rem">
+          </div>
+          <div style="display:flex;align-items:center;gap:.4rem">
+            <span style="font-size:.8rem;color:var(--muted)">📍</span>
+            <select id="tr-${m.id}" style="padding:.3rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-size:.85rem">
+              <option value="">— Terrain —</option>
+              ${TERRAINS.map(t=>`<option value="${t}" ${m.terrain===t?'selected':''}>${t}</option>`).join('')}
+            </select>
+          </div>
+          <div style="display:flex;align-items:center;gap:.4rem">
+            <input type="number" min="0" id="s1-${m.id}" value="${m.score1??0}" style="width:48px;text-align:center;padding:.3rem;border:1.5px solid var(--border);border-radius:6px;font-size:1rem;font-weight:700">
+            <span style="font-weight:700;color:var(--muted)">–</span>
+            <input type="number" min="0" id="s2-${m.id}" value="${m.score2??0}" style="width:48px;text-align:center;padding:.3rem;border:1.5px solid var(--border);border-radius:6px;font-size:1rem;font-weight:700">
+          </div>
           <select id="st-${m.id}" style="padding:.3rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-size:.82rem">
-            <option value="planifie"  ${m.statut==='planifie'  ?'selected':''}>Planifié</option>
-            <option value="en_cours"  ${m.statut==='en_cours'  ?'selected':''}>En cours</option>
-            <option value="termine"   ${m.statut==='termine'   ?'selected':''}>Terminé</option>
+            <option value="planifie" ${m.statut==='planifie'?'selected':''}>Planifié</option>
+            <option value="en_cours" ${m.statut==='en_cours'?'selected':''}>En cours</option>
+            <option value="termine"  ${m.statut==='termine' ?'selected':''}>Terminé</option>
           </select>
-          <button class="btn-primary btn-sm" onclick="saveScore('${m.id}')">✓</button>
+          <button class="btn-primary btn-sm" onclick="saveMatch('${m.id}')">✓ Sauvegarder</button>
           <button class="btn-danger btn-sm"  onclick="deleteMatch('${m.id}')">✕</button>
         </div>
       </div>`).join('')}
   `).join('');
+}
+
+async function genererRencontres() {
+  if (!_tid) { alert('Sélectionne un tournoi d\'abord.'); return; }
+  const msg     = document.getElementById('gen-msg');
+  const terrain = document.getElementById('gen-terrain').value || null;
+
+  await loadMatchsAdmin();
+  const groupes = [...new Set(_equipes.map(e => e.groupe).filter(Boolean))];
+  if (!groupes.length) { showMsg(msg, 'Aucune équipe avec poule assignée.', 'error'); return; }
+
+  const inserts = [];
+  groupes.forEach(g => {
+    const equipes = _equipes.filter(e => e.groupe === g);
+    for (let i = 0; i < equipes.length; i++) {
+      for (let j = i + 1; j < equipes.length; j++) {
+        const dejà = _matchs.find(m =>
+          m.phase === 'poule' && m.groupe === g &&
+          ((m.equipe1_id === equipes[i].id && m.equipe2_id === equipes[j].id) ||
+           (m.equipe1_id === equipes[j].id && m.equipe2_id === equipes[i].id))
+        );
+        if (!dejà) inserts.push({
+          tournament_id: _tid,
+          equipe1_id: equipes[i].id,
+          equipe2_id: equipes[j].id,
+          phase: 'poule', groupe: g,
+          terrain: terrain, statut: 'planifie',
+        });
+      }
+    }
+  });
+
+  if (!inserts.length) { showMsg(msg, 'Tous les matchs de poule existent déjà.', 'success'); return; }
+  const { error } = await sb.from('matchs').insert(inserts);
+  if (error) { showMsg(msg, error.message, 'error'); return; }
+  showMsg(msg, `${inserts.length} match(s) générés !`, 'success');
+  loadMatchsAdmin();
 }
 
 async function addMatch() {
@@ -231,11 +287,13 @@ async function addMatch() {
   loadMatchsAdmin();
 }
 
-async function saveScore(id) {
-  const score1 = parseInt(document.getElementById('s1-' + id).value) || 0;
-  const score2 = parseInt(document.getElementById('s2-' + id).value) || 0;
-  const statut = document.getElementById('st-' + id).value;
-  await sb.from('matchs').update({ score1, score2, statut }).eq('id', id);
+async function saveMatch(id) {
+  const score1  = parseInt(document.getElementById('s1-'  + id).value) || 0;
+  const score2  = parseInt(document.getElementById('s2-'  + id).value) || 0;
+  const statut  = document.getElementById('st-'  + id).value;
+  const heure   = document.getElementById('h-'   + id).value || null;
+  const terrain = document.getElementById('tr-'  + id).value || null;
+  await sb.from('matchs').update({ score1, score2, statut, heure, terrain }).eq('id', id);
   loadMatchsAdmin();
 }
 

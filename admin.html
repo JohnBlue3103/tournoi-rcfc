@@ -36,6 +36,7 @@
     <button class="admin-tab active" id="atab-tournoi" onclick="switchAdminTab('tournoi')">🏆 Tournoi</button>
     <button class="admin-tab" id="atab-equipes" onclick="switchAdminTab('equipes')">👕 Équipes</button>
     <button class="admin-tab" id="atab-matchs" onclick="switchAdminTab('matchs')">⚽ Matchs</button>
+    <button class="admin-tab" id="atab-phases" onclick="switchAdminTab('phases')">🥇 Phases</button>
     <button class="admin-tab" id="atab-qr" onclick="switchAdminTab('qr')">📱 QR Code</button>
   </div>
 
@@ -201,6 +202,13 @@
       <p class="section-title">Saisir les scores</p>
       <div id="matchs-admin-list"><p class="empty">Aucun match planifié.</p></div>
     </div>
+  </div>
+
+  <!-- PHASES FINALES ADMIN -->
+  <div id="panel-phases" class="page-section hidden">
+    <p class="section-title">Tableau des phases finales</p>
+    <p style="font-size:.85rem;color:#666;margin-bottom:1rem">Sélectionne les équipes qualifiées pour chaque rencontre, puis sauvegarde.</p>
+    <div id="phases-admin-list"><p class="empty">Génère d'abord les phases finales dans l'onglet Matchs.</p></div>
   </div>
 
   <!-- QR CODE -->

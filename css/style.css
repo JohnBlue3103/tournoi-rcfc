@@ -575,6 +575,32 @@ body {
 .bracket-empty p { margin-bottom: .35rem; font-size: .9rem; }
 .bracket-sub { font-size: .82rem !important; color: #aaa !important; }
 
+/* ===== BRACKET ADMIN ===== */
+.bracket-team-row {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  flex-wrap: wrap;
+}
+.bracket-team-select {
+  flex: 1;
+  min-width: 120px;
+  padding: .4rem .6rem;
+  border: 1.5px solid var(--primary);
+  border-radius: 8px;
+  font-size: .9rem;
+  font-weight: 600;
+  color: var(--primary);
+  background: #e8f0fe;
+  cursor: pointer;
+}
+.bracket-team-select:focus { outline: none; border-color: var(--primary-l); }
+.bracket-vs {
+  font-weight: 700;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
 /* ===== BONUS FILLES ===== */
 .bonus-wrap {
   display: flex;

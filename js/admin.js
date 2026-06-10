@@ -58,6 +58,7 @@ function switchAdminTab(tab) {
   localStorage.setItem('admin_tab', tab);
   if (tab === 'equipes') loadEquipes();
   if (tab === 'matchs')  loadMatchsAdmin();
+  if (tab === 'phases')  loadMatchsAdmin().then(renderBracketAdmin);
   if (tab === 'qr')      renderQR();
 }
 
@@ -271,6 +272,90 @@ function renderMatchsAdmin() {
         </div>
       </div>`).join('')}
   `).join('');
+}
+
+/* ===== BRACKET ADMIN (onglet Phases) ===== */
+function renderBracketAdmin() {
+  const el = document.getElementById('phases-admin-list');
+  if (!el) return;
+
+  const SECTIONS = [
+    { titre: '🏆 Tableau principal', cls: 'bst-principal', phases: ['quarts','demies','petite_finale','finale'] },
+    { titre: '🥈 Consolante',        cls: 'bst-conso',     phases: ['conso_demies','conso_petite','conso_finale'] },
+    { titre: '📋 Classement',        cls: 'bst-class',     phases: ['classement'] },
+  ];
+  const PHASE_LABELS = { quarts:'Quarts de finale', demies:'Demi-finales', petite_finale:'Petite finale', finale:'Finale', conso_demies:'Consolante — Demi-finales', conso_petite:'Consolante — Petite finale', conso_finale:'Consolante — Finale', classement:'Matchs de classement' };
+  const TERRAINS = ['H1','H2','K1','K2'];
+  const koMatchs = _matchs.filter(m => SECTIONS.flatMap(s => s.phases).includes(m.phase));
+
+  if (!koMatchs.length) {
+    el.innerHTML = '<p class="empty">Aucune phase finale générée. Utilise les boutons dans l\'onglet Matchs.</p>';
+    return;
+  }
+
+  const eqOpts = `<option value="">— À définir —</option>` +
+    _equipes.map(e => `<option value="${e.id}">${e.nom}</option>`).join('');
+
+  el.innerHTML = SECTIONS.map(sec => {
+    const matchsSec = koMatchs.filter(m => sec.phases.includes(m.phase));
+    if (!matchsSec.length) return '';
+    return `
+      <p class="bracket-section-title ${sec.cls}">${sec.titre}</p>
+      ${sec.phases.map(phase => {
+        const matchsPhase = matchsSec.filter(m => m.phase === phase);
+        if (!matchsPhase.length) return '';
+        return `
+          <p class="bracket-phase-title">${PHASE_LABELS[phase]}</p>
+          ${matchsPhase.map((m, idx) => `
+            <div class="match-edit-card" id="bcard-${m.id}">
+              <div class="bracket-team-row">
+                <select id="beq1-${m.id}" class="bracket-team-select">
+                  ${eqOpts.replace(`value="${m.equipe1_id}"`, `value="${m.equipe1_id}" selected`)}
+                </select>
+                <span class="bracket-vs">vs</span>
+                <select id="beq2-${m.id}" class="bracket-team-select">
+                  ${eqOpts.replace(`value="${m.equipe2_id}"`, `value="${m.equipe2_id}" selected`)}
+                </select>
+              </div>
+              <div class="match-edit-fields" style="margin-top:.5rem">
+                <div style="display:flex;align-items:center;gap:.4rem">
+                  <span style="font-size:.8rem;color:var(--muted)">🕐</span>
+                  <input type="time" id="bh-${m.id}" value="${m.heure||''}" style="width:100px;padding:.3rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-size:.85rem">
+                </div>
+                <div style="display:flex;align-items:center;gap:.4rem">
+                  <span style="font-size:.8rem;color:var(--muted)">📍</span>
+                  <select id="btr-${m.id}" style="padding:.3rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-size:.85rem">
+                    <option value="">— Terrain —</option>
+                    ${TERRAINS.map(t=>`<option value="${t}" ${m.terrain===t?'selected':''}>${t}</option>`).join('')}
+                  </select>
+                </div>
+                <div style="display:flex;align-items:center;gap:.4rem">
+                  <input type="number" min="0" id="bs1-${m.id}" value="${m.score1??0}" style="width:48px;text-align:center;padding:.3rem;border:1.5px solid var(--border);border-radius:6px;font-size:1rem;font-weight:700">
+                  <span style="font-weight:700;color:var(--muted)">–</span>
+                  <input type="number" min="0" id="bs2-${m.id}" value="${m.score2??0}" style="width:48px;text-align:center;padding:.3rem;border:1.5px solid var(--border);border-radius:6px;font-size:1rem;font-weight:700">
+                </div>
+                <select id="bst-${m.id}" style="padding:.3rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-size:.82rem">
+                  <option value="planifie" ${m.statut==='planifie'?'selected':''}>Planifié</option>
+                  <option value="en_cours" ${m.statut==='en_cours'?'selected':''}>En cours</option>
+                  <option value="termine"  ${m.statut==='termine' ?'selected':''}>Terminé</option>
+                </select>
+                <button class="btn-primary btn-sm" onclick="saveBracketMatch('${m.id}')">✓ Sauvegarder</button>
+              </div>
+            </div>`).join('')}`;
+      }).join('')}`;
+  }).join('');
+}
+
+async function saveBracketMatch(id) {
+  const eq1   = document.getElementById('beq1-' + id)?.value || null;
+  const eq2   = document.getElementById('beq2-' + id)?.value || null;
+  const heure  = document.getElementById('bh-'  + id)?.value || null;
+  const terrain= document.getElementById('btr-' + id)?.value || null;
+  const score1 = parseInt(document.getElementById('bs1-' + id)?.value) || 0;
+  const score2 = parseInt(document.getElementById('bs2-' + id)?.value) || 0;
+  const statut = document.getElementById('bst-' + id)?.value;
+  await sb.from('matchs').update({ equipe1_id: eq1, equipe2_id: eq2, heure, terrain, score1, score2, statut }).eq('id', id);
+  loadMatchsAdmin().then(renderBracketAdmin);
 }
 
 async function genererRencontres() {

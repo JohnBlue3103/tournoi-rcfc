@@ -552,6 +552,20 @@ body {
 .bm-score { text-align: center; min-width: 56px; }
 .bm-score-val { font-size: 1.2rem; font-weight: 700; color: var(--text); }
 .bm-meta { font-size: .7rem; color: var(--muted); margin-top: .15rem; }
+.bracket-section-title {
+  font-size: .82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  padding: .45rem .9rem;
+  border-radius: 6px;
+  margin: 1.4rem 0 .75rem;
+  display: inline-block;
+}
+.bst-principal { background: #e3eeff; color: var(--primary); }
+.bst-conso     { background: #f3f3f3; color: #555; }
+.bst-class     { background: #fff4e5; color: #b45309; }
+
 .bracket-empty {
   text-align: center;
   padding: 3rem 1rem;

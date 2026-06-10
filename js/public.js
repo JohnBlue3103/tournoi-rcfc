@@ -11,6 +11,10 @@ const PHASE_LABELS = {
   demies:        'Demi-finales',
   petite_finale: 'Petite finale',
   finale:        'Finale',
+  conso_demies:  'Consolante — Demi-finales',
+  conso_petite:  'Consolante — Petite finale',
+  conso_finale:  'Consolante — Finale',
+  classement:    'Matchs de classement',
 };
 
 async function init() {
@@ -176,7 +180,7 @@ function renderAgenda() {
     const list = byPhase['poule_' + g] || [];
     if (list.length) sections.push({ label: `Poule ${g}`, matchs: list });
   });
-  ['quarts', 'demies', 'petite_finale', 'finale'].forEach(p => {
+  ['quarts','demies','petite_finale','finale','conso_demies','conso_petite','conso_finale','classement'].forEach(p => {
     const list = byPhase[p] || [];
     if (list.length) sections.push({ label: PHASE_LABELS[p], matchs: list });
   });
@@ -212,9 +216,11 @@ function renderPhaseFinales() {
   const wrap  = document.getElementById('tab-phases');
   const eqMap = Object.fromEntries(_equipes.map(e => [e.id, e.nom]));
 
-  const KO = ['quarts', 'demies', 'petite_finale', 'finale'];
-  const KO_LABELS = { quarts: 'Quarts de finale', demies: 'Demi-finales', petite_finale: 'Petite finale', finale: 'Finale' };
-  const koMatchs = _matchs.filter(m => KO.includes(m.phase));
+  const KO      = ['quarts', 'demies', 'petite_finale', 'finale'];
+  const CONSO   = ['conso_demies', 'conso_petite', 'conso_finale'];
+  const CLASS   = ['classement'];
+  const allPhases = [...KO, ...CONSO, ...CLASS];
+  const koMatchs = _matchs.filter(m => allPhases.includes(m.phase));
 
   if (!koMatchs.length) {
     wrap.innerHTML = `
@@ -226,33 +232,46 @@ function renderPhaseFinales() {
     return;
   }
 
-  wrap.innerHTML = KO.map(phase => {
-    const matchs = koMatchs.filter(m => m.phase === phase);
-    if (!matchs.length) return '';
+  const renderSection = (phases, titre, classTitre) => {
+    const matchsSection = koMatchs.filter(m => phases.includes(m.phase));
+    if (!matchsSection.length) return '';
     return `
-      <div class="bracket-phase">
-        <p class="bracket-phase-title">${KO_LABELS[phase]}</p>
-        ${matchs.map((m, idx) => {
-          const e1  = eqMap[m.equipe1_id] || `Équipe ${idx * 2 + 1}`;
-          const e2  = eqMap[m.equipe2_id] || `Équipe ${idx * 2 + 2}`;
-          const isT = m.statut === 'termine';
-          const isE = m.statut === 'en_cours';
-          const score = isT || isE ? `${m.score1 ?? 0} – ${m.score2 ?? 0}` : 'vs';
-          const win1 = isT && (m.score1 || 0) > (m.score2 || 0);
-          const win2 = isT && (m.score2 || 0) > (m.score1 || 0);
-          const meta = [m.heure, m.terrain].filter(Boolean).join(' · ');
-          return `
-          <div class="bracket-match ${m.statut}">
-            <div class="bm-team${win1 ? ' bm-winner' : ''}">${e1}</div>
-            <div class="bm-score">
-              <div class="bm-score-val">${score}</div>
-              ${meta ? `<div class="bm-meta">${meta}</div>` : ''}
-            </div>
-            <div class="bm-team right${win2 ? ' bm-winner' : ''}">${e2}</div>
+      ${titre ? `<p class="bracket-section-title ${classTitre}">${titre}</p>` : ''}
+      ${phases.map(phase => {
+        const matchs = matchsSection.filter(m => m.phase === phase);
+        if (!matchs.length) return '';
+        return `
+          <div class="bracket-phase">
+            <p class="bracket-phase-title">${PHASE_LABELS[phase]||phase}</p>
+            ${matchs.map((m, idx) => renderBracketMatch(m, idx, eqMap)).join('')}
           </div>`;
-        }).join('')}
-      </div>`;
-  }).join('');
+      }).join('')}`;
+  };
+
+  wrap.innerHTML =
+    renderSection(KO,    '🏆 Tableau principal', 'bst-principal') +
+    renderSection(CONSO, '🥈 Consolante',         'bst-conso') +
+    renderSection(CLASS, '📋 Classement',          'bst-class');
+}
+
+function renderBracketMatch(m, idx, eqMap) {
+  const e1  = eqMap[m.equipe1_id] || `Équipe ${idx * 2 + 1}`;
+  const e2  = eqMap[m.equipe2_id] || `Équipe ${idx * 2 + 2}`;
+  const isT = m.statut === 'termine';
+  const isE = m.statut === 'en_cours';
+  const score = isT || isE ? `${m.score1 ?? 0} – ${m.score2 ?? 0}` : 'vs';
+  const win1  = isT && (m.score1 || 0) > (m.score2 || 0);
+  const win2  = isT && (m.score2 || 0) > (m.score1 || 0);
+  const meta  = [m.heure, m.terrain].filter(Boolean).join(' · ');
+  return `
+    <div class="bracket-match ${m.statut}">
+      <div class="bm-team${win1 ? ' bm-winner' : ''}">${e1}</div>
+      <div class="bm-score">
+        <div class="bm-score-val">${score}</div>
+        ${meta ? `<div class="bm-meta">${meta}</div>` : ''}
+      </div>
+      <div class="bm-team right${win2 ? ' bm-winner' : ''}">${e2}</div>
+    </div>`;
 }
 
 /* ===== CLASSEMENT ===== */

@@ -134,6 +134,22 @@
       <p id="phases-msg" class="alert hidden" style="margin-top:.5rem"></p>
     </div>
 
+    <div class="gen-block" style="margin-top:1rem">
+      <p class="section-title" style="margin-bottom:.4rem">🥈 Générer la consolante</p>
+      <p style="font-size:.85rem;color:#666;margin-bottom:.75rem">Bracket séparé pour les équipes non qualifiées.</p>
+      <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:.5rem">
+          <label style="font-size:.85rem;font-weight:600">Équipes consolante</label>
+          <select id="conso-nb" style="padding:.45rem .6rem;border:1.5px solid var(--border);border-radius:8px;font-size:.9rem">
+            <option value="4">4 équipes (demies + finale)</option>
+            <option value="2">2 équipes (finale seule)</option>
+          </select>
+        </div>
+        <button class="btn-secondary" onclick="genererConsolante()">🥈 Générer la consolante</button>
+      </div>
+      <p id="conso-msg" class="alert hidden" style="margin-top:.5rem"></p>
+    </div>
+
     <hr style="margin:1.25rem 0;border:none;border-top:1px solid var(--border)">
     <p class="section-title">Ajouter un match manuellement</p>
     <div class="form-row">
@@ -155,6 +171,12 @@
           <option value="demies">Demi-finales</option>
           <option value="petite_finale">Petite finale</option>
           <option value="finale">Finale</option>
+          <optgroup label="Consolante">
+            <option value="conso_demies">Consolante — Demies</option>
+            <option value="conso_petite">Consolante — Petite finale</option>
+            <option value="conso_finale">Consolante — Finale</option>
+          </optgroup>
+          <option value="classement">Match de classement</option>
         </select>
       </div>
       <div class="form-group">

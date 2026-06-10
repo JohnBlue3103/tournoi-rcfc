@@ -192,8 +192,8 @@ function renderMatchsAdmin() {
   const eqMap = Object.fromEntries(_equipes.map(e => [e.id, e.nom]));
   if (!_matchs.length) { el.innerHTML = '<p class="empty">Aucun match. Utilise "Générer tous les matchs" ou ajoute-en un manuellement.</p>'; return; }
 
-  const PHASE_ORDER  = ['poule', 'quarts', 'demies', 'petite_finale', 'finale'];
-  const PHASE_LABELS = { poule:'Poules', quarts:'Quarts de finale', demies:'Demi-finales', petite_finale:'Petite finale', finale:'Finale' };
+  const PHASE_ORDER  = ['poule','quarts','demies','petite_finale','finale','conso_demies','conso_petite','conso_finale','classement'];
+  const PHASE_LABELS = { poule:'Poules', quarts:'Quarts de finale', demies:'Demi-finales', petite_finale:'Petite finale', finale:'Finale', conso_demies:'Consolante — Demi-finales', conso_petite:'Consolante — Petite finale', conso_finale:'Consolante — Finale', classement:'Matchs de classement' };
   const TERRAINS     = ['H1', 'H2', 'K1', 'K2'];
   const TOUS_ARBITRES = ['Lucie', 'Fred', 'Audelyne', 'Emmanuel', 'Damien', 'Brice'];
 
@@ -206,7 +206,7 @@ function renderMatchsAdmin() {
   const sections = [];
   const groupes = [...new Set(_matchs.filter(m=>m.phase==='poule').map(m=>m.groupe||'?'))].sort();
   groupes.forEach(g => { if (byPhaseGroupe[`poule_${g}`]) sections.push({ label:`Poule ${g}`, key:`poule_${g}` }); });
-  ['quarts','demies','petite_finale','finale'].forEach(p => { if (byPhaseGroupe[p]) sections.push({ label:PHASE_LABELS[p], key:p }); });
+  ['quarts','demies','petite_finale','finale','conso_demies','conso_petite','conso_finale','classement'].forEach(p => { if (byPhaseGroupe[p]) sections.push({ label:PHASE_LABELS[p], key:p }); });
 
   el.innerHTML = sections.map(s => `
     <p class="groupe-title" style="margin:1rem 0 .4rem">${s.label}</p>
@@ -327,6 +327,25 @@ async function genererPhasesFinales() {
   const { error } = await sb.from('matchs').insert(inserts);
   if (error) { showMsg(msg, error.message, 'error'); return; }
   showMsg(msg, `Tableau généré (${nb} équipes) !`, 'success');
+  loadMatchsAdmin();
+}
+
+async function genererConsolante() {
+  if (!_tid) { alert('Sélectionne un tournoi d\'abord.'); return; }
+  const msg = document.getElementById('conso-msg');
+  await loadMatchsAdmin();
+  const existants = _matchs.filter(m => ['conso_demies','conso_petite','conso_finale'].includes(m.phase));
+  if (existants.length) { showMsg(msg, 'Consolante déjà générée.', 'error'); return; }
+  const nb = parseInt(document.getElementById('conso-nb').value) || 4;
+  const inserts = [];
+  if (nb === 4) {
+    for (let i = 0; i < 2; i++) inserts.push({ tournament_id: _tid, phase: 'conso_demies',  statut: 'planifie' });
+    inserts.push({ tournament_id: _tid, phase: 'conso_petite', statut: 'planifie' });
+  }
+  inserts.push({ tournament_id: _tid, phase: 'conso_finale', statut: 'planifie' });
+  const { error } = await sb.from('matchs').insert(inserts);
+  if (error) { showMsg(msg, error.message, 'error'); return; }
+  showMsg(msg, `Consolante générée (${nb} équipes) !`, 'success');
   loadMatchsAdmin();
 }
 

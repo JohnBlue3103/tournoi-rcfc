@@ -376,6 +376,23 @@ body {
   .gen-block { padding: .75rem; background: #f8faf8; border-radius: var(--radius); border: 1px solid var(--border); }
 }
 
+/* ===== TOURNOI ACTIF ===== */
+.item-row-actif {
+  background: #e8f5e9;
+  border-color: var(--primary);
+  border-left: 4px solid var(--primary);
+}
+.item-row-actif .item-label { color: var(--primary); font-weight: 700; }
+.badge-actif {
+  display: inline-block;
+  background: var(--primary);
+  color: #fff;
+  font-size: .78rem;
+  font-weight: 700;
+  padding: .25rem .65rem;
+  border-radius: 20px;
+}
+
 /* ===== STATUS BADGE ===== */
 .status-badge {
   font-size: .72rem;

@@ -59,19 +59,22 @@ async function loadTournois() {
   const { data } = await sb.from('tournaments').select('*').order('created_at', { ascending: false });
   const list = document.getElementById('tournois-list');
   if (!data || !data.length) { list.innerHTML = '<p class="empty">Aucun tournoi créé.</p>'; return; }
-  list.innerHTML = data.map(t => `
-    <div class="item-row">
-      <div>
-        <div class="item-label">${t.nom}</div>
-        <div class="item-sub">${[t.sport, t.date, t.lieu].filter(Boolean).join(' · ')}
-          ${_tid === t.id ? ' <strong style="color:var(--primary)">✓ Actif</strong>' : ''}
-        </div>
+  list.innerHTML = data.map(t => {
+    const actif = _tid === t.id;
+    return `
+    <div class="item-row${actif ? ' item-row-actif' : ''}">
+      <div style="flex:1;min-width:0">
+        <div class="item-label">${actif ? '✓ ' : ''}${t.nom}</div>
+        <div class="item-sub">${[t.sport, t.date, t.lieu].filter(Boolean).join(' · ')}</div>
       </div>
       <div class="item-actions">
-        <button class="btn-secondary btn-sm" onclick="selectTournoi('${t.id}','${t.nom}')">Sélectionner</button>
+        ${actif
+          ? `<span class="badge-actif">Sélectionné</span>`
+          : `<button class="btn-secondary btn-sm" onclick="selectTournoi('${t.id}','${t.nom}')">Sélectionner</button>`}
         <button class="btn-danger btn-sm" onclick="deleteTournoi('${t.id}')">Supprimer</button>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 async function saveTournoi() {
@@ -100,7 +103,6 @@ function selectTournoi(id, nom) {
   _tid = id;
   updateAdminTitle(nom);
   loadTournois();
-  alert(`Tournoi "${nom}" sélectionné. Passez aux onglets Équipes et Matchs.`);
 }
 
 async function deleteTournoi(id) {

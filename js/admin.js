@@ -226,6 +226,15 @@ function renderMatchsAdmin() {
             <span style="font-weight:700;color:var(--muted)">–</span>
             <input type="number" min="0" id="s2-${m.id}" value="${m.score2??0}" style="width:48px;text-align:center;padding:.3rem;border:1.5px solid var(--border);border-radius:6px;font-size:1rem;font-weight:700">
           </div>
+          <div class="bonus-wrap" title="Points bonus filles équipe 1">
+            ⚥<select class="bonus-select" id="b1-${m.id}">
+              ${[0,1,2,3].map(n=>`<option value="${n}" ${(m.bonus1||0)===n?'selected':''}>${n > 0 ? '+'+n : '0'}</option>`).join('')}
+            </select>
+            <span style="font-size:.72rem;color:var(--muted)">vs</span>
+            <select class="bonus-select" id="b2-${m.id}">
+              ${[0,1,2,3].map(n=>`<option value="${n}" ${(m.bonus2||0)===n?'selected':''}>${n > 0 ? '+'+n : '0'}</option>`).join('')}
+            </select>
+          </div>
           <div style="display:flex;align-items:center;gap:.4rem">
             <span style="font-size:.8rem;color:var(--muted)">🟨</span>
             <select id="ar-${m.id}" style="padding:.3rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-size:.85rem">
@@ -363,7 +372,9 @@ async function saveMatch(id) {
   const heure   = document.getElementById('h-'   + id).value || null;
   const terrain = document.getElementById('tr-'  + id).value || null;
   const arbitre = document.getElementById('ar-'  + id)?.value || null;
-  await sb.from('matchs').update({ score1, score2, statut, heure, terrain, arbitre }).eq('id', id);
+  const bonus1  = parseInt(document.getElementById('b1-' + id)?.value) || 0;
+  const bonus2  = parseInt(document.getElementById('b2-' + id)?.value) || 0;
+  await sb.from('matchs').update({ score1, score2, statut, heure, terrain, arbitre, bonus1, bonus2 }).eq('id', id);
   loadMatchsAdmin();
 }
 

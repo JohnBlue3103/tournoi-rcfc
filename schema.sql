@@ -15,8 +15,10 @@ create table equipes (
   tournament_id uuid references tournaments(id) on delete cascade,
   nom text not null,
   groupe text,
+  bonus int default 0,
   created_at timestamptz default now()
 );
+-- ALTER TABLE equipes ADD COLUMN IF NOT EXISTS bonus int DEFAULT 0;
 
 create table matchs (
   id uuid primary key default gen_random_uuid(),

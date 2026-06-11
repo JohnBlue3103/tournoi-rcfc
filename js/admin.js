@@ -254,15 +254,6 @@ function renderMatchsAdmin() {
             <span style="font-weight:700;color:var(--muted)">–</span>
             <input type="number" min="0" id="s2-${m.id}" value="${m.score2??0}" style="width:48px;text-align:center;padding:.3rem;border:1.5px solid var(--border);border-radius:6px;font-size:1rem;font-weight:700">
           </div>
-          <div class="bonus-wrap" title="Points bonus filles équipe 1">
-            ⚥<select class="bonus-select" id="b1-${m.id}">
-              ${[0,1,2,3].map(n=>`<option value="${n}" ${(m.bonus1||0)===n?'selected':''}>${n > 0 ? '+'+n : '0'}</option>`).join('')}
-            </select>
-            <span style="font-size:.72rem;color:var(--muted)">vs</span>
-            <select class="bonus-select" id="b2-${m.id}">
-              ${[0,1,2,3].map(n=>`<option value="${n}" ${(m.bonus2||0)===n?'selected':''}>${n > 0 ? '+'+n : '0'}</option>`).join('')}
-            </select>
-          </div>
           <div style="display:flex;align-items:center;gap:.4rem">
             <span style="font-size:.8rem;color:var(--muted)">🟨</span>
             <select id="ar-${m.id}" style="padding:.3rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-size:.85rem">
@@ -582,9 +573,7 @@ async function saveMatch(id) {
   const heure   = document.getElementById('h-'   + id).value || null;
   const terrain = document.getElementById('tr-'  + id).value || null;
   const arbitre = document.getElementById('ar-'  + id)?.value || null;
-  const bonus1  = parseInt(document.getElementById('b1-' + id)?.value) || 0;
-  const bonus2  = parseInt(document.getElementById('b2-' + id)?.value) || 0;
-  const update  = { score1, score2, statut, heure, terrain, arbitre, bonus1, bonus2 };
+  const update  = { score1, score2, statut, heure, terrain, arbitre };
   const eq1sel  = document.getElementById('eq1-' + id);
   const eq2sel  = document.getElementById('eq2-' + id);
   if (eq1sel) update.equipe1_id = eq1sel.value || null;
@@ -610,33 +599,56 @@ function renderClassementAdmin() {
     return;
   }
 
-  el.innerHTML = groupes.map(g => {
-    const rows = calcClassementAdmin(g);
-    const hasBonus = rows.some(r => r.bonus > 0);
-    return `
-      <div class="groupe-block">
-        <p class="groupe-title">Poule ${g}</p>
-        <table class="standings-table">
-          <thead><tr>
-            <th>Équipe</th><th>J</th><th>V</th><th>N</th><th>D</th>
-            <th>BP</th><th>BC</th><th>Diff</th>
-            ${hasBonus ? '<th title="Bonus filles">⚥</th>' : ''}
-            <th class="pts-col">Pts</th>
-          </tr></thead>
-          <tbody>
-            ${rows.map((r, i) => `
-              <tr class="${i < 2 ? 'qualifie' : ''}">
-                <td>${r.nom}</td>
-                <td>${r.j}</td><td>${r.v}</td><td>${r.n}</td><td>${r.d}</td>
-                <td>${r.bp}</td><td>${r.bc}</td>
-                <td>${r.bp - r.bc >= 0 ? '+' : ''}${r.bp - r.bc}</td>
-                ${hasBonus ? `<td style="color:var(--accent);font-weight:600">+${r.bonus}</td>` : ''}
-                <td class="pts-col">${r.pts}</td>
-              </tr>`).join('')}
-          </tbody>
-        </table>
-      </div>`;
-  }).join('');
+  // Section bonus filles (une valeur par équipe)
+  const toutesEquipes = _equipes.filter(e => groupes.includes(e.groupe)).sort((a,b) => (a.groupe||'').localeCompare(b.groupe||'') || a.nom.localeCompare(b.nom));
+  el.innerHTML = `
+    <div class="bonus-admin-block">
+      <p class="section-title" style="font-size:.95rem;margin-bottom:.5rem">⚥ Bonus filles (par équipe)</p>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:.85rem">Attribue 1 à 3 pts bonus à chaque équipe ayant fait jouer une fille. S'applique en fin de tournoi.</p>
+      <div class="bonus-admin-grid">
+        ${toutesEquipes.map(e => `
+          <div class="bonus-admin-row">
+            <span class="bonus-admin-nom">${e.nom} <span style="color:var(--muted);font-size:.78rem">(Poule ${e.groupe})</span></span>
+            <select class="bonus-select" id="bteam-${e.id}" onchange="saveTeamBonus('${e.id}', this.value)">
+              ${[0,1,2,3].map(n => `<option value="${n}" ${(e.bonus||0)===n?'selected':''}>${n === 0 ? 'Pas de bonus' : '+'+n+' pt'+(n>1?'s':'')}</option>`).join('')}
+            </select>
+          </div>`).join('')}
+      </div>
+    </div>
+    <hr style="margin:1.25rem 0;border:none;border-top:1px solid var(--border)">
+    ${groupes.map(g => {
+      const rows = calcClassementAdmin(g);
+      const hasBonus = rows.some(r => r.bonus > 0);
+      return `
+        <div class="groupe-block">
+          <p class="groupe-title">Poule ${g}</p>
+          <table class="standings-table">
+            <thead><tr>
+              <th>Équipe</th><th>J</th><th>V</th><th>N</th><th>D</th>
+              <th>BP</th><th>BC</th><th>Diff</th>
+              ${hasBonus ? '<th title="Bonus filles">⚥</th>' : ''}
+              <th class="pts-col">Pts</th>
+            </tr></thead>
+            <tbody>
+              ${rows.map((r, i) => `
+                <tr class="${i < 2 ? 'qualifie' : ''}">
+                  <td>${r.nom}</td>
+                  <td>${r.j}</td><td>${r.v}</td><td>${r.n}</td><td>${r.d}</td>
+                  <td>${r.bp}</td><td>${r.bc}</td>
+                  <td>${r.bp - r.bc >= 0 ? '+' : ''}${r.bp - r.bc}</td>
+                  ${hasBonus ? `<td style="color:var(--accent);font-weight:600">+${r.bonus}</td>` : ''}
+                  <td class="pts-col">${r.pts}</td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>`;
+    }).join('')}`;
+}
+
+async function saveTeamBonus(equipeId, val) {
+  await sb.from('equipes').update({ bonus: parseInt(val) || 0 }).eq('id', equipeId);
+  await loadMatchsAdmin();
+  renderClassementAdmin();
 }
 
 function calcClassementAdmin(groupe) {
@@ -654,9 +666,9 @@ function calcClassementAdmin(groupe) {
     else if (s2 > s1) { stats[m.equipe2_id].pts += 3; stats[m.equipe2_id].v++; stats[m.equipe1_id].d++; }
     else              { stats[m.equipe1_id].pts++; stats[m.equipe2_id].pts++; stats[m.equipe1_id].n++; stats[m.equipe2_id].n++; }
   });
-  _matchs.filter(m => m.groupe === groupe).forEach(m => {
-    if (stats[m.equipe1_id] && m.bonus1) { stats[m.equipe1_id].bonus += m.bonus1; stats[m.equipe1_id].pts += m.bonus1; }
-    if (stats[m.equipe2_id] && m.bonus2) { stats[m.equipe2_id].bonus += m.bonus2; stats[m.equipe2_id].pts += m.bonus2; }
+  // Bonus filles : une valeur par équipe
+  _equipes.filter(e => e.groupe === groupe).forEach(e => {
+    if (stats[e.id] && e.bonus) { stats[e.id].bonus = e.bonus; stats[e.id].pts += e.bonus; }
   });
   return Object.values(stats).sort((a, b) =>
     b.pts - a.pts || (b.bp - b.bc) - (a.bp - a.bc) || b.bp - a.bp

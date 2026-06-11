@@ -329,10 +329,9 @@ function calcClassement(groupe) {
     else if (s2 > s1) { stats[m.equipe2_id].pts += 3; stats[m.equipe2_id].v++; stats[m.equipe1_id].d++; }
     else              { stats[m.equipe1_id].pts++;     stats[m.equipe2_id].pts++; stats[m.equipe1_id].n++; stats[m.equipe2_id].n++; }
   });
-  // Bonus filles (tous matchs, pas seulement terminés)
-  _matchs.filter(m => m.groupe === groupe).forEach(m => {
-    if (stats[m.equipe1_id] && m.bonus1) { stats[m.equipe1_id].bonus += m.bonus1; stats[m.equipe1_id].pts += m.bonus1; }
-    if (stats[m.equipe2_id] && m.bonus2) { stats[m.equipe2_id].bonus += m.bonus2; stats[m.equipe2_id].pts += m.bonus2; }
+  // Bonus filles : une valeur par équipe, saisie en fin de tournoi
+  _equipes.filter(e => e.groupe === groupe).forEach(e => {
+    if (stats[e.id] && e.bonus) { stats[e.id].bonus = e.bonus; stats[e.id].pts += e.bonus; }
   });
   return Object.values(stats).sort((a, b) =>
     b.pts - a.pts || (b.bp - b.bc) - (a.bp - a.bc) || b.bp - a.bp

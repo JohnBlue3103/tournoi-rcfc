@@ -57,9 +57,7 @@ function switchAdminTab(tab) {
   document.getElementById('panel-' + tab).classList.remove('hidden');
   localStorage.setItem('admin_tab', tab);
   if (tab === 'equipes') loadEquipes();
-  if (tab === 'matchs')  loadMatchsAdmin().then(() => {
-    if (_matchs.some(m => m.phase === 'poule' && !m.heure)) planifierHoraires('17:45');
-  });
+  if (tab === 'matchs')  loadMatchsAdmin();
   if (tab === 'phases')     loadMatchsAdmin().then(renderBracketAdmin);
   if (tab === 'classement') loadMatchsAdmin().then(renderClassementAdmin);
   if (tab === 'qr')         renderQR();
@@ -425,7 +423,7 @@ async function genererRencontres() {
   const msg = document.getElementById('gen-msg');
 
   await loadMatchsAdmin();
-  const groupes = [...new Set(_equipes.map(e => e.groupe).filter(Boolean))];
+  const groupes = [...new Set(_equipes.map(e => e.groupe).filter(Boolean))].sort();
   if (!groupes.length) { showMsg(msg, 'Aucune équipe avec poule assignée.', 'error'); return; }
 
   const inserts = [];
@@ -529,46 +527,6 @@ async function supprimerTousMatchs() {
   loadMatchsAdmin();
 }
 
-async function planifierHoraires(heureForce) {
-  const msg   = document.getElementById('planning-msg');
-  const debut = heureForce || document.getElementById('planning-debut').value;
-  if (!debut) { showMsg(msg, 'Indique une heure de début.', 'error'); return; }
-
-  // Toujours recharger depuis la DB avant de planifier
-  await loadMatchsAdmin();
-
-  const aPlanner = _matchs
-    .filter(m => m.phase === 'poule' && !m.heure)
-    .sort((a, b) => (a.groupe||'').localeCompare(b.groupe||'') || a.created_at.localeCompare(b.created_at));
-
-  if (!aPlanner.length) { showMsg(msg, 'Tous les matchs de poule ont déjà un horaire.', 'success'); return; }
-
-  const TERRAINS   = ['H1', 'H2', 'K1', 'K2'];
-  const ARBITRES   = ['Lucie', 'Fred', 'Audelyne', 'Emmanuel'];
-  const SLOT_MIN   = 20;
-  const PAUSE_DEB  = 20 * 60 + 30;
-  const PAUSE_FIN  = 21 * 60 + 30;
-
-  const [hh, mm] = debut.split(':').map(Number);
-  let mins      = hh * 60 + mm;
-  let slotIdx   = 0;
-
-  for (const m of aPlanner) {
-    if (mins >= PAUSE_DEB && mins < PAUSE_FIN) {
-      mins = PAUSE_FIN;
-      slotIdx = Math.ceil(slotIdx / 4) * 4;
-    }
-    const terrain = TERRAINS[slotIdx % 4];
-    const arbitre = ARBITRES[slotIdx % 4];
-    const heure   = `${String(Math.floor(mins/60)).padStart(2,'0')}:${String(mins%60).padStart(2,'0')}`;
-    slotIdx++;
-    if (slotIdx % 4 === 0) mins += SLOT_MIN;
-    await sb.from('matchs').update({ heure, terrain, arbitre }).eq('id', m.id);
-  }
-
-  showMsg(msg, `${aPlanner.length} match(s) planifié(s) à partir de ${debut} !`, 'success');
-  loadMatchsAdmin();
-}
 
 async function addMatch() {
   if (!_tid) { alert('Sélectionne un tournoi d\'abord.'); return; }

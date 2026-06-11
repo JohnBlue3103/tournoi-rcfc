@@ -597,10 +597,28 @@ async function genererRencontres() {
   const isOrgMatch = m => orgIds.has(m.equipe1_id) || orgIds.has(m.equipe2_id);
   const TERRAINS_H = new Set(['H1','H2']); // terrains acceptant les équipes orga
 
+  // Arbitre→équipe : évite d'arbitrer son propre match
+  const ARBITRE_EQUIPES = { 'Fred': 'fc merguez' };
+  const eqNomMap = Object.fromEntries(_equipes.map(e => [e.id, normalize(e.nom)]));
+  let arbIdx = 0;
+  const pickArbitre = match => {
+    for (let skip = 0; skip < ARBITRES.length; skip++) {
+      const a = ARBITRES[(arbIdx + skip) % ARBITRES.length];
+      const team = ARBITRE_EQUIPES[a];
+      const eq1 = eqNomMap[match.equipe1_id] || '';
+      const eq2 = eqNomMap[match.equipe2_id] || '';
+      if (!team || (!eq1.includes(team) && !eq2.includes(team))) {
+        arbIdx += skip + 1;
+        return a;
+      }
+    }
+    arbIdx++;
+    return ARBITRES[arbIdx % ARBITRES.length];
+  };
+
   // Priorité 2 : accepte les matchs consécutifs si besoin pour remplir les terrains
   const remaining = [...inserts];
   let mins = PREMIER_SLOT;
-  let arbIdx = 0;
 
   while (remaining.length > 0) {
     const slotBusy = new Set();
@@ -624,7 +642,7 @@ async function genererRencontres() {
         (teamBusy[m.equipe2_id] = teamBusy[m.equipe2_id] || new Set()).add(t);
       });
       m.terrain = TERRAINS[ti];
-      m.arbitre = ARBITRES[arbIdx++ % ARBITRES.length];
+      m.arbitre = pickArbitre(m);
       m.heure   = toTime(mins);
     }
 
@@ -717,16 +735,34 @@ async function planifierPhasesFinales() {
   await loadMatchsAdmin();
   const byCreated = (a, b) => a.created_at.localeCompare(b.created_at);
 
+  const normalizeKO = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  const ARBITRE_EQUIPES_KO = { 'Fred': 'fc merguez' };
+  const eqNomMapKO = Object.fromEntries(_equipes.map(e => [e.id, normalizeKO(e.nom)]));
+  let arbIdx = 0;
+  const pickArbitreKO = match => {
+    for (let skip = 0; skip < ARBITRES.length; skip++) {
+      const a = ARBITRES[(arbIdx + skip) % ARBITRES.length];
+      const team = ARBITRE_EQUIPES_KO[a];
+      const eq1 = eqNomMapKO[match.equipe1_id] || '';
+      const eq2 = eqNomMapKO[match.equipe2_id] || '';
+      if (!team || (!eq1.includes(team) && !eq2.includes(team))) {
+        arbIdx += skip + 1;
+        return a;
+      }
+    }
+    arbIdx++;
+    return ARBITRES[arbIdx % ARBITRES.length];
+  };
+
   let mins = toMins(startVal);
   const updates = [];
-  let arbIdx = 0;
 
   for (const phases of ROUNDS) {
     const roundMatchs = phases.flatMap(p => _matchs.filter(m => m.phase === p).sort(byCreated));
     if (!roundMatchs.length) { mins += SLOT; continue; }
     const isFinale = phases.includes('finale');
     roundMatchs.forEach((m, i) => {
-      updates.push({ id: m.id, heure: toTime(mins), terrain: TERRAINS[i % TERRAINS.length], arbitre: ARBITRES[arbIdx++ % ARBITRES.length] });
+      updates.push({ id: m.id, heure: toTime(mins), terrain: TERRAINS[i % TERRAINS.length], arbitre: pickArbitreKO(m) });
     });
     mins += (isFinale ? 20 : 15) + 5;
   }

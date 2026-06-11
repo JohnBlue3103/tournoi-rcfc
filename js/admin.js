@@ -471,11 +471,25 @@ async function genererRencontres() {
   const PAUSE_FIN = 21 * 60 + 30;
   const toTime    = m => `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
 
+  // Équipes absentes au premier créneau (organisation)
+  const SKIP_PREMIER_SLOT = ['fc merguez', 'sbeltranos', "l'tefoucée", 'tefoucée'];
+  const skipIds = new Set(
+    _equipes
+      .filter(e => SKIP_PREMIER_SLOT.some(n => e.nom.toLowerCase().includes(n)))
+      .map(e => e.id)
+  );
+
+  const PREMIER_SLOT = 17 * 60 + 45;
   const teamBusy    = {}; // teamId → Set<mins>
   const terrainUsed = {}; // mins → terrain[]
 
+  // Pré-marquer le premier créneau pour les équipes absentes
+  skipIds.forEach(id => {
+    (teamBusy[id] = teamBusy[id] || new Set()).add(PREMIER_SLOT);
+  });
+
   inserts.forEach(m => {
-    let mins = 17 * 60 + 45;
+    let mins = PREMIER_SLOT;
     while (true) {
       if (mins >= PAUSE_DEB && mins < PAUSE_FIN) mins = PAUSE_FIN;
       const used    = terrainUsed[mins] || [];
@@ -485,15 +499,17 @@ async function genererRencontres() {
       if (terrain && !t1busy && !t2busy) {
         const idx = TERRAINS.indexOf(terrain);
         (terrainUsed[mins] = terrainUsed[mins] || []).push(terrain);
-        (teamBusy[m.equipe1_id] = teamBusy[m.equipe1_id] || new Set()).add(mins);
-        (teamBusy[m.equipe2_id] = teamBusy[m.equipe2_id] || new Set()).add(mins);
+        // Marquer le créneau joué + le suivant (pause obligatoire)
+        [mins, mins + SLOT_MIN].forEach(t => {
+          (teamBusy[m.equipe1_id] = teamBusy[m.equipe1_id] || new Set()).add(t);
+          (teamBusy[m.equipe2_id] = teamBusy[m.equipe2_id] || new Set()).add(t);
+        });
         m.terrain = terrain;
         m.arbitre = ARBITRES[idx];
         m.heure   = toTime(mins);
         break;
       }
-      if (!terrain) mins += SLOT_MIN; // tous les terrains pris → créneau suivant
-      else mins += SLOT_MIN;          // équipe occupée → créneau suivant
+      mins += SLOT_MIN;
     }
   });
 

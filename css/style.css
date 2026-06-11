@@ -251,6 +251,7 @@ body {
 .phase-title.pt-A { color: #004d98; border-left: 3px solid #004d98; padding-left: .5rem; }
 .phase-title.pt-B { color: #a50044; border-left: 3px solid #a50044; padding-left: .5rem; }
 .phase-title.pt-C { color: #2d7a2d; border-left: 3px solid #2d7a2d; padding-left: .5rem; }
+.phase-title.pt-D { color: #b86c00; border-left: 3px solid #b86c00; padding-left: .5rem; }
 .phase-title.pt-ko { color: #7c4dbb; border-left: 3px solid #7c4dbb; padding-left: .5rem; }
 .match-card {
   background: var(--surface);

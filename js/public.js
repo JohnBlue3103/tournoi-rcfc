@@ -178,7 +178,7 @@ function renderAgenda() {
 
   const sections  = [];
   const groupes   = [...new Set(_matchs.filter(m => m.phase === 'poule').map(m => m.groupe).filter(Boolean))].sort();
-  const POULE_COLORS = { A: 'pt-A', B: 'pt-B', C: 'pt-C' };
+  const POULE_COLORS = { A: 'pt-A', B: 'pt-B', C: 'pt-C', D: 'pt-D' };
   groupes.forEach(g => {
     const list = byPhase['poule_' + g] || [];
     if (list.length) sections.push({ label: `Poule ${g}`, matchs: list, cls: POULE_COLORS[g] || '' });
@@ -318,6 +318,7 @@ function renderClassements() {
         </table>
       </div>`;
   }).join('') + (() => {
+    if (groupes.length >= 4) return ''; // 4 poules → top-2 suffit
     const tiers = groupes.map(g => allRows[g]?.[2] ? { ...allRows[g][2], poule: g } : null).filter(Boolean);
     if (tiers.length < 2) return '';
     tiers.sort((a,b) => b.pts - a.pts || (b.bp-b.bc)-(a.bp-a.bc) || b.bp - a.bp);

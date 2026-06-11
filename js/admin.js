@@ -148,7 +148,7 @@ function renderEquipes() {
     if (!byGroupe[g]) byGroupe[g] = [];
     byGroupe[g].push(e);
   });
-  const groupes = [...new Set(['A','B','C',...Object.keys(byGroupe)])].filter(g => byGroupe[g]);
+  const groupes = [...new Set(['A','B','C','D',...Object.keys(byGroupe)])].filter(g => byGroupe[g]);
 
   el.innerHTML = `<div class="pool-columns">
     ${groupes.map(g => `
@@ -190,12 +190,12 @@ async function repartirAleatoire() {
   if (!_tid || !_equipes.length) return;
   const shuffled = [..._equipes].sort(() => Math.random() - 0.5);
   const n = shuffled.length;
-  const pools = ['A','B','C'];
-  const base  = Math.floor(n / 3);
-  const extra = n % 3;
+  const pools = ['A','B','C','D'];
+  const base  = Math.floor(n / 4);
+  const extra = n % 4;
   const updates = [];
   let idx = 0;
-  for (let p = 0; p < 3; p++) {
+  for (let p = 0; p < 4; p++) {
     const size = base + (p < extra ? 1 : 0);
     for (let k = 0; k < size; k++) {
       updates.push({ id: shuffled[idx++].id, groupe: pools[p] });
@@ -800,6 +800,7 @@ function renderClassementAdmin() {
         </div>`;
     }).join('')}
     ${(() => {
+      if (groupes.length >= 4) return ''; // 4 poules → top-2 suffit, pas de meilleur 3ème
       const tiers = groupes.map(g => { const rows = calcClassementAdmin(g); return rows[2] ? { ...rows[2], poule: g } : null; }).filter(Boolean);
       if (tiers.length < 2) return '';
       tiers.sort((a,b) => b.pts - a.pts || (b.bp-b.bc)-(a.bp-a.bc) || b.bp - a.bp);

@@ -247,6 +247,19 @@
   <div id="panel-phases" class="page-section hidden">
     <p class="section-title">Tableau des phases finales</p>
     <p style="font-size:.85rem;color:#666;margin-bottom:1rem">Sélectionne les équipes qualifiées pour chaque rencontre, puis sauvegarde.</p>
+
+    <div class="gen-block" style="margin-bottom:1rem">
+      <p style="font-size:.85rem;font-weight:600;margin-bottom:.5rem">⏱ Planifier automatiquement les horaires</p>
+      <p style="font-size:.8rem;color:#666;margin-bottom:.6rem">Matchs 15 min · Finale 20 min · 5 min entre chaque tour</p>
+      <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap">
+        <div class="form-group" style="margin:0">
+          <label style="font-size:.8rem">🕐 Heure de début des phases finales</label>
+          <input id="ko-debut" type="time" value="21:30" style="width:110px;padding:.35rem .5rem;border:1.5px solid var(--border);border-radius:7px;font-size:.9rem">
+        </div>
+        <button class="btn-secondary" onclick="planifierPhasesFinales()">⚡ Planifier les horaires</button>
+      </div>
+      <p id="ko-plan-msg" class="alert hidden" style="margin-top:.5rem"></p>
+    </div>
     <div id="phases-admin-list"><p class="empty">Génère d'abord les phases finales dans l'onglet Matchs.</p></div>
   </div>
 

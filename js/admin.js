@@ -744,6 +744,49 @@ async function genererClassement5_8() {
   loadMatchsAdmin();
 }
 
+async function planifierPhasesFinales() {
+  if (!_tid) return;
+  const msg     = document.getElementById('ko-plan-msg');
+  const startVal= document.getElementById('ko-debut')?.value || '21:30';
+  const toMins  = t => { const [h,m]=t.split(':'); return +h*60+ +m; };
+  const toTime  = m => `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
+  const TERRAINS= ['H1','H2','K1','K2'];
+  const ARBITRES= ['Lucie','Fred','Audelyne','Emmanuel','Brice'];
+  const SLOT    = 15 + 5; // 15 min match + 5 min entre tours
+
+  // Ordre fixe des tours (matches simultanés sur les terrains disponibles)
+  const ROUNDS = [
+    ['quarts'],
+    ['conso_quarts'],
+    ['demies',       'class_demies'],
+    ['conso_demies', 'conso_class_demies'],
+    ['conso_finale', 'class_5e', 'class_7e', 'conso_class_13'],
+    ['petite_finale','conso_class_15'],
+    ['finale'],
+  ];
+
+  await loadMatchsAdmin();
+  const byCreated = (a, b) => a.created_at.localeCompare(b.created_at);
+
+  let mins = toMins(startVal);
+  const updates = [];
+
+  for (const phases of ROUNDS) {
+    const roundMatchs = phases.flatMap(p => _matchs.filter(m => m.phase === p).sort(byCreated));
+    if (!roundMatchs.length) { mins += SLOT; continue; }
+    const isFinale = phases.includes('finale');
+    roundMatchs.forEach((m, i) => {
+      updates.push({ id: m.id, heure: toTime(mins), terrain: TERRAINS[i % TERRAINS.length], arbitre: ARBITRES[i % ARBITRES.length] });
+    });
+    mins += (isFinale ? 20 : 15) + 5;
+  }
+
+  if (!updates.length) { showMsg(msg, 'Aucun match de phase finale trouvé.', 'error'); return; }
+  await Promise.all(updates.map(u => sb.from('matchs').update({ heure: u.heure, terrain: u.terrain, arbitre: u.arbitre }).eq('id', u.id)));
+  showMsg(msg, `${updates.length} matchs planifiés à partir de ${startVal} !`, 'success');
+  loadMatchsAdmin().then(renderBracketAdmin);
+}
+
 async function supprimerTousMatchs() {
   if (!_tid) return;
   if (!confirm('Supprimer TOUS les matchs de ce tournoi ?')) return;

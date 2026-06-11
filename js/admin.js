@@ -145,10 +145,19 @@ function renderEquipes() {
     <p class="groupe-title" style="margin:.75rem 0 .3rem">Poule ${g}</p>
     ${byGroupe[g].map(e => `
       <div class="item-row">
-        <span class="item-label">${e.nom}</span>
+        <input class="equipe-nom-input" id="enom-${e.id}" value="${e.nom}" onblur="renameEquipe('${e.id}')">
         <button class="btn-danger btn-sm" onclick="deleteEquipe('${e.id}')">✕</button>
       </div>`).join('')}
   `).join('');
+}
+
+async function renameEquipe(id) {
+  const input = document.getElementById('enom-' + id);
+  if (!input) return;
+  const nom = input.value.trim();
+  if (!nom) { input.value = _equipes.find(e => e.id === id)?.nom || ''; return; }
+  await sb.from('equipes').update({ nom }).eq('id', id);
+  await loadEquipes();
 }
 
 async function addEquipe() {
@@ -453,26 +462,38 @@ async function genererRencontres() {
     return;
   }
 
-  // Assigner heure / terrain / arbitre directement dans les inserts
+  // Assigner heure / terrain / arbitre sans conflit d'équipe
   const TERRAINS  = ['H1', 'H2', 'K1', 'K2'];
   const ARBITRES  = ['Lucie', 'Fred', 'Audelyne', 'Emmanuel'];
-  const SLOT_MIN  = 20; // 15 min match + 5 min pause
+  const SLOT_MIN  = 20;
   const PAUSE_DEB = 20 * 60 + 30;
   const PAUSE_FIN = 21 * 60 + 30;
+  const toTime    = m => `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
 
-  let mins    = 17 * 60 + 45;
-  let slotIdx = 0;
+  const teamBusy    = {}; // teamId → Set<mins>
+  const terrainUsed = {}; // mins → terrain[]
 
   inserts.forEach(m => {
-    if (mins >= PAUSE_DEB && mins < PAUSE_FIN) {
-      mins    = PAUSE_FIN;
-      slotIdx = Math.ceil(slotIdx / 4) * 4;
+    let mins = 17 * 60 + 45;
+    while (true) {
+      if (mins >= PAUSE_DEB && mins < PAUSE_FIN) mins = PAUSE_FIN;
+      const used    = terrainUsed[mins] || [];
+      const terrain = TERRAINS.find(t => !used.includes(t));
+      const t1busy  = (teamBusy[m.equipe1_id] || new Set()).has(mins);
+      const t2busy  = (teamBusy[m.equipe2_id] || new Set()).has(mins);
+      if (terrain && !t1busy && !t2busy) {
+        const idx = TERRAINS.indexOf(terrain);
+        (terrainUsed[mins] = terrainUsed[mins] || []).push(terrain);
+        (teamBusy[m.equipe1_id] = teamBusy[m.equipe1_id] || new Set()).add(mins);
+        (teamBusy[m.equipe2_id] = teamBusy[m.equipe2_id] || new Set()).add(mins);
+        m.terrain = terrain;
+        m.arbitre = ARBITRES[idx];
+        m.heure   = toTime(mins);
+        break;
+      }
+      if (!terrain) mins += SLOT_MIN; // tous les terrains pris → créneau suivant
+      else mins += SLOT_MIN;          // équipe occupée → créneau suivant
     }
-    m.terrain = TERRAINS[slotIdx % 4];
-    m.arbitre = ARBITRES[slotIdx % 4];
-    m.heure   = `${String(Math.floor(mins / 60)).padStart(2, '0')}:${String(mins % 60).padStart(2, '0')}`;
-    slotIdx++;
-    if (slotIdx % 4 === 0) mins += SLOT_MIN;
   });
 
   const { error } = await sb.from('matchs').insert(inserts);

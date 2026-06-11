@@ -384,6 +384,20 @@ body {
   gap: .5rem;
 }
 .item-label { font-weight: 600; }
+.equipe-nom-input {
+  flex: 1;
+  font-weight: 600;
+  font-size: .95rem;
+  border: 1.5px solid transparent;
+  border-radius: 6px;
+  padding: .2rem .4rem;
+  background: transparent;
+  font-family: inherit;
+  color: var(--text);
+  transition: border-color .15s;
+}
+.equipe-nom-input:hover { border-color: var(--border); }
+.equipe-nom-input:focus { outline: none; border-color: var(--primary); background: #fff; }
 .item-sub   { font-size: .8rem; color: var(--muted); }
 .item-actions { display: flex; gap: .4rem; flex-shrink: 0; }
 

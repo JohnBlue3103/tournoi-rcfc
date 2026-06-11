@@ -475,7 +475,7 @@ async function genererRencontres() {
   // Assigner heure / terrain / arbitre sans conflit d'équipe
   const TERRAINS  = ['H1', 'H2', 'K1', 'K2'];
   const ARBITRES  = ['Lucie', 'Fred', 'Audelyne', 'Emmanuel'];
-  const SLOT_MIN  = 20;
+  const SLOT_MIN  = 17;
   const PAUSE_DEB = 20 * 60 + 30;
   const PAUSE_FIN = 21 * 60 + 30;
   const toTime    = m => `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;

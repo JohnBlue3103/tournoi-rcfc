@@ -250,9 +250,9 @@ function renderMatchsAdmin() {
     <div class="match-edit-card" id="card-${m.id}">
       <div class="match-edit-teams">
         ${m.phase === 'poule'
-          ? `<input class="equipe-nom-input" data-eid="${m.equipe1_id}" value="${(eqMap[m.equipe1_id]||'?').replace(/"/g,'&quot;')}" onchange="renameEquipeInline('${m.equipe1_id}',this.value)" style="max-width:140px">
+          ? `<input class="equipe-nom-input" data-eid="${m.equipe1_id}" value="${(eqMap[m.equipe1_id]||'?').replace(/"/g,'&quot;')}" onchange="renameEquipeInline('${m.equipe1_id}',this.value)">
              <span style="color:var(--muted);font-weight:700;margin:0 .5rem">vs</span>
-             <input class="equipe-nom-input" data-eid="${m.equipe2_id}" value="${(eqMap[m.equipe2_id]||'?').replace(/"/g,'&quot;')}" onchange="renameEquipeInline('${m.equipe2_id}',this.value)" style="max-width:140px">`
+             <input class="equipe-nom-input" data-eid="${m.equipe2_id}" value="${(eqMap[m.equipe2_id]||'?').replace(/"/g,'&quot;')}" onchange="renameEquipeInline('${m.equipe2_id}',this.value)">`
           : `<select id="eq1-${m.id}" style="padding:.3rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-size:.85rem;max-width:130px">
                <option value="">— Équipe 1 —</option>
                ${_equipes.map(e=>`<option value="${e.id}" ${m.equipe1_id===e.id?'selected':''}>${e.nom}</option>`).join('')}

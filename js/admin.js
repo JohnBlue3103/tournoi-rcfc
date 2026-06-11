@@ -510,38 +510,53 @@ async function genererRencontres() {
   );
 
   const PREMIER_SLOT = toMins(debutVal);
-  const teamBusy    = {}; // teamId → Set<mins>
-  const terrainUsed = {}; // mins → terrain[]
+  const teamBusy    = {}; // teamId → Set<mins> des créneaux bloqués
 
   // Pré-marquer le premier créneau pour les équipes absentes
   skipIds.forEach(id => {
     (teamBusy[id] = teamBusy[id] || new Set()).add(PREMIER_SLOT);
   });
 
-  inserts.forEach(m => {
-    let mins = PREMIER_SLOT;
-    while (true) {
-      if (mins >= PAUSE_DEB && mins < PAUSE_FIN) mins = PAUSE_FIN;
-      const used    = terrainUsed[mins] || [];
-      const terrain = TERRAINS.find(t => !used.includes(t));
-      const t1busy  = (teamBusy[m.equipe1_id] || new Set()).has(mins);
-      const t2busy  = (teamBusy[m.equipe2_id] || new Set()).has(mins);
-      if (terrain && !t1busy && !t2busy) {
-        const idx = TERRAINS.indexOf(terrain);
-        (terrainUsed[mins] = terrainUsed[mins] || []).push(terrain);
-        // Marquer le créneau joué + le suivant (pause obligatoire)
-        [mins, mins + SLOT_MIN].forEach(t => {
-          (teamBusy[m.equipe1_id] = teamBusy[m.equipe1_id] || new Set()).add(t);
-          (teamBusy[m.equipe2_id] = teamBusy[m.equipe2_id] || new Set()).add(t);
-        });
-        m.terrain = terrain;
-        m.arbitre = ARBITRES[idx];
-        m.heure   = toTime(mins);
-        break;
+  // Scheduler créneau par créneau : remplit TOUJOURS les 4 terrains.
+  // Priorité 1 : équipes au repos (pas de match consécutif)
+  // Priorité 2 : accepte les matchs consécutifs si besoin pour remplir les terrains
+  const remaining = [...inserts];
+  let mins = PREMIER_SLOT;
+
+  while (remaining.length > 0) {
+    if (mins >= PAUSE_DEB && mins < PAUSE_FIN) { mins = PAUSE_FIN; continue; }
+
+    const slotBusy = new Set(); // équipes déjà assignées à CE créneau
+
+    for (let ti = 0; ti < TERRAINS.length && remaining.length > 0; ti++) {
+      // Priorité 1 : sans back-to-back
+      let idx = remaining.findIndex(m =>
+        !slotBusy.has(m.equipe1_id) && !slotBusy.has(m.equipe2_id) &&
+        !(teamBusy[m.equipe1_id] || new Set()).has(mins) &&
+        !(teamBusy[m.equipe2_id] || new Set()).has(mins)
+      );
+      // Priorité 2 : back-to-back accepté pour remplir le terrain
+      if (idx === -1) {
+        idx = remaining.findIndex(m =>
+          !slotBusy.has(m.equipe1_id) && !slotBusy.has(m.equipe2_id)
+        );
       }
-      mins += SLOT_MIN;
+      if (idx === -1) break;
+
+      const m = remaining.splice(idx, 1)[0];
+      slotBusy.add(m.equipe1_id);
+      slotBusy.add(m.equipe2_id);
+      [mins, mins + SLOT_MIN].forEach(t => {
+        (teamBusy[m.equipe1_id] = teamBusy[m.equipe1_id] || new Set()).add(t);
+        (teamBusy[m.equipe2_id] = teamBusy[m.equipe2_id] || new Set()).add(t);
+      });
+      m.terrain = TERRAINS[ti];
+      m.arbitre = ARBITRES[ti];
+      m.heure   = toTime(mins);
     }
-  });
+
+    mins += SLOT_MIN;
+  }
 
   const { error } = await sb.from('matchs').insert(inserts);
   if (error) { showMsg(msg, error.message, 'error'); return; }

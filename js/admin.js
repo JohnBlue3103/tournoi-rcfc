@@ -600,6 +600,7 @@ async function genererRencontres() {
   // Priorité 2 : accepte les matchs consécutifs si besoin pour remplir les terrains
   const remaining = [...inserts];
   let mins = PREMIER_SLOT;
+  let arbIdx = 0;
 
   while (remaining.length > 0) {
     const slotBusy = new Set();
@@ -623,7 +624,7 @@ async function genererRencontres() {
         (teamBusy[m.equipe2_id] = teamBusy[m.equipe2_id] || new Set()).add(t);
       });
       m.terrain = TERRAINS[ti];
-      m.arbitre = ARBITRES[ti % ARBITRES.length];
+      m.arbitre = ARBITRES[arbIdx++ % ARBITRES.length];
       m.heure   = toTime(mins);
     }
 
@@ -718,13 +719,14 @@ async function planifierPhasesFinales() {
 
   let mins = toMins(startVal);
   const updates = [];
+  let arbIdx = 0;
 
   for (const phases of ROUNDS) {
     const roundMatchs = phases.flatMap(p => _matchs.filter(m => m.phase === p).sort(byCreated));
     if (!roundMatchs.length) { mins += SLOT; continue; }
     const isFinale = phases.includes('finale');
     roundMatchs.forEach((m, i) => {
-      updates.push({ id: m.id, heure: toTime(mins), terrain: TERRAINS[i % TERRAINS.length], arbitre: ARBITRES[i % ARBITRES.length] });
+      updates.push({ id: m.id, heure: toTime(mins), terrain: TERRAINS[i % TERRAINS.length], arbitre: ARBITRES[arbIdx++ % ARBITRES.length] });
     });
     mins += (isFinale ? 20 : 15) + 5;
   }

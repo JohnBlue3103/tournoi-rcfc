@@ -435,8 +435,10 @@ async function genererRencontres() {
   const groupes = [...new Set(_equipes.map(e => e.groupe).filter(Boolean))].sort();
   if (!groupes.length) { showMsg(msg, 'Aucune équipe avec poule assignée.', 'error'); return; }
 
-  const inserts = [];
+  // Construire les matchs par groupe puis interleaver pour mélanger les poules dans les créneaux
+  const matchsParGroupe = {};
   groupes.forEach(g => {
+    matchsParGroupe[g] = [];
     const equipes = _equipes.filter(e => e.groupe === g);
     for (let i = 0; i < equipes.length; i++) {
       for (let j = i + 1; j < equipes.length; j++) {
@@ -445,7 +447,7 @@ async function genererRencontres() {
           ((m.equipe1_id === equipes[i].id && m.equipe2_id === equipes[j].id) ||
            (m.equipe1_id === equipes[j].id && m.equipe2_id === equipes[i].id))
         );
-        if (!dejà) inserts.push({
+        if (!dejà) matchsParGroupe[g].push({
           tournament_id: _tid,
           equipe1_id: equipes[i].id,
           equipe2_id: equipes[j].id,
@@ -455,6 +457,13 @@ async function genererRencontres() {
       }
     }
   });
+
+  // Interleaver : 1 match de chaque poule à tour de rôle → les scheduler les regroupe par créneau
+  const inserts = [];
+  const maxLen = Math.max(...groupes.map(g => matchsParGroupe[g].length));
+  for (let i = 0; i < maxLen; i++) {
+    groupes.forEach(g => { if (matchsParGroupe[g][i]) inserts.push(matchsParGroupe[g][i]); });
+  }
 
   if (!inserts.length) {
     showMsg(msg, 'Tous les matchs de poule existent déjà.', 'success');

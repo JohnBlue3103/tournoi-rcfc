@@ -287,7 +287,6 @@ function renderClassements() {
 
   wrap.innerHTML = groupes.map(g => {
     const rows = calcClassement(g);
-    const hasBonus = rows.some(r => r.bonus > 0);
     return `
       <div class="groupe-block">
         <p class="groupe-title">Poule ${g}</p>
@@ -295,7 +294,7 @@ function renderClassements() {
           <thead><tr>
             <th>Équipe</th><th>J</th><th>V</th><th>N</th><th>D</th>
             <th>BP</th><th>BC</th><th>Diff</th>
-            ${hasBonus ? '<th title="Points bonus filles">⚥</th>' : ''}
+            <th title="Bonus filles">⚥</th>
             <th class="pts-col">Pts</th>
           </tr></thead>
           <tbody>
@@ -305,7 +304,7 @@ function renderClassements() {
                 <td>${r.j}</td><td>${r.v}</td><td>${r.n}</td><td>${r.d}</td>
                 <td>${r.bp}</td><td>${r.bc}</td>
                 <td>${r.bp - r.bc >= 0 ? '+' : ''}${r.bp - r.bc}</td>
-                ${hasBonus ? `<td style="color:var(--accent);font-weight:600">+${r.bonus}</td>` : ''}
+                <td style="color:var(--accent);font-weight:600">${r.bonus > 0 ? '+'+r.bonus : '—'}</td>
                 <td class="pts-col">${r.pts}</td>
               </tr>`).join('')}
           </tbody>

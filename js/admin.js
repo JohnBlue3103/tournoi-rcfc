@@ -211,7 +211,12 @@ function renderMatchsAdmin() {
 
   el.innerHTML = sections.map(s => `
     <p class="groupe-title" style="margin:1rem 0 .4rem">${s.label}</p>
-    ${byPhaseGroupe[s.key].map(m => `
+    ${byPhaseGroupe[s.key].slice().sort((a, b) => {
+      if (a.heure && b.heure) return a.heure.localeCompare(b.heure);
+      if (a.heure) return -1;
+      if (b.heure) return 1;
+      return (eqMap[a.equipe1_id]||'').localeCompare(eqMap[b.equipe1_id]||'') || (eqMap[a.equipe2_id]||'').localeCompare(eqMap[b.equipe2_id]||'');
+    }).map(m => `
       <div class="match-edit-card" id="card-${m.id}">
         <div class="match-edit-teams">
           ${m.phase === 'poule'
@@ -387,7 +392,11 @@ async function genererRencontres() {
     }
   });
 
-  if (!inserts.length) { showMsg(msg, 'Tous les matchs de poule existent déjà.', 'success'); return; }
+  if (!inserts.length) {
+    showMsg(msg, 'Tous les matchs de poule existent déjà — vérification des horaires…', 'success');
+    await planifierHoraires('17:45');
+    return;
+  }
   const { error } = await sb.from('matchs').insert(inserts);
   if (error) { showMsg(msg, error.message, 'error'); return; }
   showMsg(msg, `${inserts.length} match(s) générés — planification en cours…`, 'success');

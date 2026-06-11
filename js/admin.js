@@ -462,12 +462,8 @@ async function genererRencontres() {
   const PAUSE_DEB = 20 * 60 + 30;
   const PAUSE_FIN = 21 * 60 + 30;
 
-  // Reprendre après le dernier horaire déjà planifié (si matchs existants)
-  const derniere = _matchs.filter(m => m.phase === 'poule' && m.heure)
-    .map(m => { const [h,mn] = m.heure.split(':').map(Number); return h*60+mn; })
-    .reduce((acc, v) => Math.max(acc, v), -1);
-  let mins    = derniere >= 0 ? derniere + SLOT_MIN : 17 * 60 + 45;
-  let slotIdx = derniere >= 0 ? _matchs.filter(m => m.phase === 'poule' && m.heure).length : 0;
+  let mins    = 17 * 60 + 45;
+  let slotIdx = 0;
 
   inserts.forEach(m => {
     if (mins >= PAUSE_DEB && mins < PAUSE_FIN) {

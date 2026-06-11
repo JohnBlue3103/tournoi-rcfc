@@ -232,8 +232,10 @@ function renderMatchsAdmin() {
       <button class="filtre-btn${_filtreStatut==='termine'  ? ' active' : ''}" data-val="termine"  onclick="setFiltreStatut('termine')">Terminés <span class="filtre-count">${counts.termine}</span></button>
     </div>`;
 
-  const PHASE_SHORT = { quarts:'Quarts', demies:'Demies', petite_finale:'Petite finale', finale:'Finale', conso_demies:'Conso. demies', conso_petite:'Conso. petite', conso_finale:'Conso. finale', classement:'Classement' };
-  const phaseLabel  = m => m.phase === 'poule' ? `Poule ${m.groupe||'?'}` : (PHASE_SHORT[m.phase] || m.phase);
+  const PHASE_SHORT  = { quarts:'Quarts', demies:'Demies', petite_finale:'Petite finale', finale:'Finale', conso_demies:'Conso. demies', conso_petite:'Conso. petite', conso_finale:'Conso. finale', classement:'Classement' };
+  const GROUPE_COLORS = { A:'#004d98', B:'#a50044', C:'#2d7a2d', D:'#b86c00' };
+  const phaseLabel   = m => m.phase === 'poule' ? `Poule ${m.groupe||'?'}` : (PHASE_SHORT[m.phase] || m.phase);
+  const phaseColor   = m => m.phase === 'poule' ? (GROUPE_COLORS[m.groupe] || '#555') : '#555';
 
   const matchCard = m => `
     <div class="match-edit-card" id="card-${m.id}">
@@ -276,7 +278,7 @@ function renderMatchsAdmin() {
             <option value="">— Arbitre —</option>
             ${TOUS_ARBITRES.map(a=>`<option value="${a}" ${m.arbitre===a?'selected':''}>${a}</option>`).join('')}
           </select>
-          <span style="font-size:.75rem;font-weight:700;color:#004d98;background:#004d9815;border:1px solid #004d9830;padding:.18rem .5rem;border-radius:5px;white-space:nowrap">${phaseLabel(m)}</span>
+          <span style="font-size:.75rem;font-weight:700;color:${phaseColor(m)};background:${phaseColor(m)}18;border:1px solid ${phaseColor(m)}40;padding:.18rem .5rem;border-radius:5px;white-space:nowrap">${phaseLabel(m)}</span>
         </div>
         <select id="st-${m.id}" style="padding:.3rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-size:.82rem">
           <option value="planifie" ${m.statut==='planifie'?'selected':''}>Planifié</option>

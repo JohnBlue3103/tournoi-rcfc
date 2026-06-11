@@ -150,26 +150,9 @@
     </div>
 
     <div class="gen-block" style="margin-top:1rem">
-      <p class="section-title" style="margin-bottom:.4rem">🥉 Générer le classement 5e-8e place</p>
-      <p style="font-size:.85rem;color:#666;margin-bottom:.75rem">Les 4 perdants des quarts jouent 2 demi-finales, puis finale 5e place et finale 7e place.</p>
-      <button class="btn-secondary" onclick="genererClassement5_8()">🥉 Générer classement 5e-8e</button>
-      <p id="class58-msg" class="alert hidden" style="margin-top:.5rem"></p>
-    </div>
-
-    <div class="gen-block" style="margin-top:1rem">
       <p class="section-title" style="margin-bottom:.4rem">🥈 Générer la consolante</p>
-      <p style="font-size:.85rem;color:#666;margin-bottom:.75rem">Bracket séparé pour les équipes non qualifiées.</p>
-      <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap">
-        <div style="display:flex;align-items:center;gap:.5rem">
-          <label style="font-size:.85rem;font-weight:600">Équipes consolante</label>
-          <select id="conso-nb" style="padding:.45rem .6rem;border:1.5px solid var(--border);border-radius:8px;font-size:.9rem">
-            <option value="8">8 équipes (quarts + demies + finale)</option>
-            <option value="4">4 équipes (demies + finale)</option>
-            <option value="2">2 équipes (finale seule)</option>
-          </select>
-        </div>
-        <button class="btn-secondary" onclick="genererConsolante()">🥈 Générer la consolante</button>
-      </div>
+      <p style="font-size:.85rem;color:#666;margin-bottom:.75rem">2 demi-finales + 1 finale pour les 4 meilleures équipes non qualifiées.</p>
+      <button class="btn-secondary" onclick="genererConsolante()">🥈 Générer la consolante</button>
       <p id="conso-msg" class="alert hidden" style="margin-top:.5rem"></p>
     </div>
 
@@ -194,21 +177,9 @@
           <option value="demies">Demi-finales</option>
           <option value="petite_finale">Petite finale</option>
           <option value="finale">Finale</option>
-          <optgroup label="Classement 5e-8e">
-            <option value="class_demies">Demi-finales classement 5e-8e</option>
-            <option value="class_5e">Match 5e-6e place</option>
-            <option value="class_7e">Match 7e-8e place</option>
-          </optgroup>
-          <optgroup label="Consolante 9e-12e">
-            <option value="conso_quarts">Consolante — Quarts</option>
-            <option value="conso_demies">Consolante — Demies</option>
-            <option value="conso_petite">Consolante — Petite finale</option>
+          <optgroup label="Consolante">
+            <option value="conso_demies">Consolante — Demi-finales</option>
             <option value="conso_finale">Consolante — Finale</option>
-          </optgroup>
-          <optgroup label="Classement 13e-16e">
-            <option value="conso_class_demies">Classement 13e-16e — Demi-finales</option>
-            <option value="conso_class_13">Match 13e-14e place</option>
-            <option value="conso_class_15">Match 15e-16e place</option>
           </optgroup>
           <option value="classement">Match de classement</option>
         </select>
@@ -250,7 +221,7 @@
 
     <div class="gen-block" style="margin-bottom:1rem">
       <p style="font-size:.85rem;font-weight:600;margin-bottom:.5rem">⏱ Planifier automatiquement les horaires</p>
-      <p style="font-size:.8rem;color:#666;margin-bottom:.6rem">Matchs 15 min · Finale 20 min · 5 min entre chaque tour</p>
+      <p style="font-size:.8rem;color:#666;margin-bottom:.6rem">Matchs 15 min · Grande finale 20 min · 5 min entre chaque tour</p>
       <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap">
         <div class="form-group" style="margin:0">
           <label style="font-size:.8rem">🕐 Heure de début des phases finales</label>
@@ -273,16 +244,15 @@
           </tr>
         </thead>
         <tbody>
-          <tr style="border-bottom:1px solid #eee"><td style="padding:.25rem .4rem">1</td><td style="padding:.25rem .4rem"><strong>Quarts de finale</strong> (tableau principal)</td><td style="padding:.25rem .4rem">H1 H2 K1 K2</td><td style="padding:.25rem .4rem">15 min</td></tr>
-          <tr style="border-bottom:1px solid #eee"><td style="padding:.25rem .4rem">2</td><td style="padding:.25rem .4rem"><strong>Quarts Consolante</strong> (équipes 9e-16e)</td><td style="padding:.25rem .4rem">H1 H2 K1 K2</td><td style="padding:.25rem .4rem">15 min</td></tr>
-          <tr style="border-bottom:1px solid #eee"><td style="padding:.25rem .4rem">3</td><td style="padding:.25rem .4rem"><strong>Demi-finales OR</strong> + <strong>Demi class. 5e-8e</strong></td><td style="padding:.25rem .4rem">H1 H2 · K1 K2</td><td style="padding:.25rem .4rem">15 min</td></tr>
-          <tr style="border-bottom:1px solid #eee"><td style="padding:.25rem .4rem">4</td><td style="padding:.25rem .4rem"><strong>Demi-finales Consolante</strong> + <strong>Demi class. 13e-16e</strong></td><td style="padding:.25rem .4rem">H1 H2 · K1 K2</td><td style="padding:.25rem .4rem">15 min</td></tr>
-          <tr style="border-bottom:1px solid #eee"><td style="padding:.25rem .4rem">5</td><td style="padding:.25rem .4rem"><strong>Finale Consolante</strong> · match 5e · match 7e · match 13e</td><td style="padding:.25rem .4rem">K1 · H1 · H2 · K2</td><td style="padding:.25rem .4rem">15 min</td></tr>
-          <tr style="border-bottom:1px solid #eee"><td style="padding:.25rem .4rem">6</td><td style="padding:.25rem .4rem"><strong>Petite Finale OR</strong> (3e place) · match 15e</td><td style="padding:.25rem .4rem">H1 · H2</td><td style="padding:.25rem .4rem">15 min</td></tr>
-          <tr><td style="padding:.25rem .4rem">7</td><td style="padding:.25rem .4rem"><strong>Grande Finale OR</strong> 🏆</td><td style="padding:.25rem .4rem">Terrain Honneur</td><td style="padding:.25rem .4rem">20 min</td></tr>
+          <tr style="border-bottom:1px solid #eee"><td style="padding:.25rem .4rem">1</td><td style="padding:.25rem .4rem"><strong>Quarts de finale</strong> (top 8)</td><td style="padding:.25rem .4rem">H1 H2 K1 K2</td><td style="padding:.25rem .4rem">15 min</td></tr>
+          <tr style="border-bottom:1px solid #eee"><td style="padding:.25rem .4rem">2</td><td style="padding:.25rem .4rem"><strong>Demi-finales Consolante</strong></td><td style="padding:.25rem .4rem">H1 H2</td><td style="padding:.25rem .4rem">15 min</td></tr>
+          <tr style="border-bottom:1px solid #eee"><td style="padding:.25rem .4rem">3</td><td style="padding:.25rem .4rem"><strong>Demi-finales OR</strong></td><td style="padding:.25rem .4rem">H1 H2</td><td style="padding:.25rem .4rem">15 min</td></tr>
+          <tr style="border-bottom:1px solid #eee"><td style="padding:.25rem .4rem">4</td><td style="padding:.25rem .4rem"><strong>Finale Consolante</strong></td><td style="padding:.25rem .4rem">K1</td><td style="padding:.25rem .4rem">15 min</td></tr>
+          <tr style="border-bottom:1px solid #eee"><td style="padding:.25rem .4rem">5</td><td style="padding:.25rem .4rem"><strong>Petite Finale OR</strong> (3e place)</td><td style="padding:.25rem .4rem">H1</td><td style="padding:.25rem .4rem">15 min</td></tr>
+          <tr><td style="padding:.25rem .4rem">6</td><td style="padding:.25rem .4rem"><strong>Grande Finale OR</strong> 🏆</td><td style="padding:.25rem .4rem">Terrain Honneur</td><td style="padding:.25rem .4rem">20 min</td></tr>
         </tbody>
       </table>
-      <p style="margin-top:.5rem;color:#888;font-size:.78rem">5 min de pause entre chaque tour · Tout le monde joue exactement 6 matchs</p>
+      <p style="margin-top:.5rem;color:#888;font-size:.78rem">5 min de pause entre chaque tour · 🥇 Vainqueur · 🥈 Finaliste · 🥉 Troisième · 🏅 Vainqueur Consolante</p>
     </div>
 
     <div id="phases-admin-list"><p class="empty">Génère d'abord les phases finales dans l'onglet Matchs.</p></div>

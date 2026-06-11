@@ -136,19 +136,73 @@ async function loadEquipes() {
   refreshEquipeSelects();
 }
 
+let _draggedEquipeId = null;
+
 function renderEquipes() {
   const el = document.getElementById('equipes-list');
   if (!_equipes.length) { el.innerHTML = '<p class="empty">Aucune équipe.</p>'; return; }
-  const byGroupe = {};
-  _equipes.forEach(e => { (byGroupe[e.groupe || '?'] = byGroupe[e.groupe || '?'] || []).push(e); });
-  el.innerHTML = Object.keys(byGroupe).sort().map(g => `
-    <p class="groupe-title" style="margin:.75rem 0 .3rem">Poule ${g}</p>
-    ${byGroupe[g].map(e => `
-      <div class="item-row">
-        <input class="equipe-nom-input" id="enom-${e.id}" value="${e.nom}" onblur="renameEquipe('${e.id}')">
-        <button class="btn-danger btn-sm" onclick="deleteEquipe('${e.id}')">✕</button>
+
+  const byGroupe = { A: [], B: [], C: [] };
+  _equipes.forEach(e => {
+    const g = e.groupe || '?';
+    if (!byGroupe[g]) byGroupe[g] = [];
+    byGroupe[g].push(e);
+  });
+  const groupes = [...new Set(['A','B','C',...Object.keys(byGroupe)])].filter(g => byGroupe[g]);
+
+  el.innerHTML = `<div class="pool-columns">
+    ${groupes.map(g => `
+      <div class="pool-col" data-groupe="${g}"
+           ondragover="event.preventDefault();this.classList.add('drag-over')"
+           ondragleave="this.classList.remove('drag-over')"
+           ondrop="dropEquipe(event,'${g}')">
+        <div class="pool-col-header">
+          <span>Poule ${g}</span>
+          <span class="pool-count">${byGroupe[g].length}</span>
+        </div>
+        ${byGroupe[g].map(e => `
+          <div class="team-drag-card" draggable="true" ondragstart="dragEquipe(event,'${e.id}')">
+            <span class="drag-handle">⠿</span>
+            <input class="equipe-nom-input" id="enom-${e.id}" value="${e.nom.replace(/"/g,'&quot;')}" onblur="renameEquipe('${e.id}')">
+            <button class="btn-danger btn-sm" onclick="deleteEquipe('${e.id}')">✕</button>
+          </div>`).join('')}
       </div>`).join('')}
-  `).join('');
+  </div>`;
+}
+
+function dragEquipe(event, id) {
+  _draggedEquipeId = id;
+  event.dataTransfer.effectAllowed = 'move';
+}
+
+async function dropEquipe(event, newGroupe) {
+  event.preventDefault();
+  event.currentTarget.classList.remove('drag-over');
+  if (!_draggedEquipeId) return;
+  const e = _equipes.find(e => e.id === _draggedEquipeId);
+  _draggedEquipeId = null;
+  if (!e || e.groupe === newGroupe) return;
+  await sb.from('equipes').update({ groupe: newGroupe }).eq('id', e.id);
+  loadEquipes();
+}
+
+async function repartirAleatoire() {
+  if (!_tid || !_equipes.length) return;
+  const shuffled = [..._equipes].sort(() => Math.random() - 0.5);
+  const n = shuffled.length;
+  const pools = ['A','B','C'];
+  const base  = Math.floor(n / 3);
+  const extra = n % 3;
+  const updates = [];
+  let idx = 0;
+  for (let p = 0; p < 3; p++) {
+    const size = base + (p < extra ? 1 : 0);
+    for (let k = 0; k < size; k++) {
+      updates.push({ id: shuffled[idx++].id, groupe: pools[p] });
+    }
+  }
+  await Promise.all(updates.map(u => sb.from('equipes').update({ groupe: u.groupe }).eq('id', u.id)));
+  loadEquipes();
 }
 
 async function renameEquipe(id) {

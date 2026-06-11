@@ -91,7 +91,10 @@
     <button class="btn-primary" onclick="addEquipe()">➕ Ajouter</button>
 
     <div style="margin-top:1.25rem">
-      <p class="section-title">Équipes inscrites</p>
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-bottom:.6rem">
+        <p class="section-title" style="margin:0">Équipes inscrites</p>
+        <button class="btn-secondary btn-sm" onclick="repartirAleatoire()">🎲 Répartir aléatoirement en 3 poules</button>
+      </div>
       <div id="equipes-list"><p class="empty">Aucune équipe.</p></div>
     </div>
   </div>

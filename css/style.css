@@ -401,6 +401,36 @@ body {
 .item-sub   { font-size: .8rem; color: var(--muted); }
 .item-actions { display: flex; gap: .4rem; flex-shrink: 0; }
 
+/* ===== POOL DRAG & DROP ===== */
+.pool-columns { display: flex; gap: .75rem; align-items: flex-start; flex-wrap: wrap; }
+.pool-col {
+  flex: 1; min-width: 180px;
+  border: 2px dashed var(--border);
+  border-radius: 10px;
+  padding: .6rem .65rem;
+  min-height: 60px;
+  transition: background .15s, border-color .15s;
+}
+.pool-col.drag-over { background: #004d9810; border-color: var(--primary); }
+.pool-col-header {
+  display: flex; justify-content: space-between; align-items: center;
+  font-weight: 700; font-size: .88rem; color: var(--primary);
+  margin-bottom: .5rem; padding-bottom: .35rem;
+  border-bottom: 1.5px solid var(--border);
+}
+.pool-count {
+  background: var(--primary); color: #fff;
+  border-radius: 10px; padding: .05rem .45rem; font-size: .72rem;
+}
+.team-drag-card {
+  display: flex; align-items: center; gap: .35rem;
+  background: #fff; border: 1.5px solid var(--border);
+  border-radius: 8px; padding: .35rem .45rem; margin-bottom: .35rem;
+  cursor: grab; user-select: none;
+}
+.team-drag-card:active { cursor: grabbing; opacity: .7; }
+.drag-handle { color: var(--muted); font-size: .95rem; flex-shrink: 0; }
+
 /* ===== SCORE EDITOR ===== */
 .score-editor {
   display: flex;

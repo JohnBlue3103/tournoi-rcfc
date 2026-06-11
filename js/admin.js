@@ -57,7 +57,9 @@ function switchAdminTab(tab) {
   document.getElementById('panel-' + tab).classList.remove('hidden');
   localStorage.setItem('admin_tab', tab);
   if (tab === 'equipes') loadEquipes();
-  if (tab === 'matchs')  loadMatchsAdmin();
+  if (tab === 'matchs')  loadMatchsAdmin().then(() => {
+    if (_matchs.some(m => m.phase === 'poule' && !m.heure)) planifierHoraires('17:45');
+  });
   if (tab === 'phases')  loadMatchsAdmin().then(renderBracketAdmin);
   if (tab === 'qr')      renderQR();
 }

@@ -60,8 +60,9 @@ function switchAdminTab(tab) {
   if (tab === 'matchs')  loadMatchsAdmin().then(() => {
     if (_matchs.some(m => m.phase === 'poule' && !m.heure)) planifierHoraires('17:45');
   });
-  if (tab === 'phases')  loadMatchsAdmin().then(renderBracketAdmin);
-  if (tab === 'qr')      renderQR();
+  if (tab === 'phases')     loadMatchsAdmin().then(renderBracketAdmin);
+  if (tab === 'classement') loadMatchsAdmin().then(renderClassementAdmin);
+  if (tab === 'qr')         renderQR();
 }
 
 /* ===== TOURNOI ===== */
@@ -536,6 +537,70 @@ async function deleteMatch(id) {
   if (!confirm('Supprimer ce match ?')) return;
   await sb.from('matchs').delete().eq('id', id);
   loadMatchsAdmin();
+}
+
+/* ===== CLASSEMENT ADMIN ===== */
+function renderClassementAdmin() {
+  const el = document.getElementById('classement-admin-list');
+  if (!el) return;
+
+  const groupes = [...new Set(_equipes.map(e => e.groupe).filter(Boolean))].sort();
+  if (!groupes.length) {
+    el.innerHTML = '<p class="empty">Aucune équipe avec poule assignée.</p>';
+    return;
+  }
+
+  el.innerHTML = groupes.map(g => {
+    const rows = calcClassementAdmin(g);
+    const hasBonus = rows.some(r => r.bonus > 0);
+    return `
+      <div class="groupe-block">
+        <p class="groupe-title">Poule ${g}</p>
+        <table class="standings-table">
+          <thead><tr>
+            <th>Équipe</th><th>J</th><th>V</th><th>N</th><th>D</th>
+            <th>BP</th><th>BC</th><th>Diff</th>
+            ${hasBonus ? '<th title="Bonus filles">⚥</th>' : ''}
+            <th class="pts-col">Pts</th>
+          </tr></thead>
+          <tbody>
+            ${rows.map((r, i) => `
+              <tr class="${i < 2 ? 'qualifie' : ''}">
+                <td>${r.nom}</td>
+                <td>${r.j}</td><td>${r.v}</td><td>${r.n}</td><td>${r.d}</td>
+                <td>${r.bp}</td><td>${r.bc}</td>
+                <td>${r.bp - r.bc >= 0 ? '+' : ''}${r.bp - r.bc}</td>
+                ${hasBonus ? `<td style="color:var(--accent);font-weight:600">+${r.bonus}</td>` : ''}
+                <td class="pts-col">${r.pts}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  }).join('');
+}
+
+function calcClassementAdmin(groupe) {
+  const stats = {};
+  _equipes.filter(e => e.groupe === groupe).forEach(e => {
+    stats[e.id] = { nom: e.nom, pts: 0, j: 0, v: 0, n: 0, d: 0, bp: 0, bc: 0, bonus: 0 };
+  });
+  _matchs.filter(m => m.groupe === groupe && m.statut === 'termine').forEach(m => {
+    if (!stats[m.equipe1_id] || !stats[m.equipe2_id]) return;
+    const s1 = m.score1 || 0, s2 = m.score2 || 0;
+    stats[m.equipe1_id].j++; stats[m.equipe2_id].j++;
+    stats[m.equipe1_id].bp += s1; stats[m.equipe1_id].bc += s2;
+    stats[m.equipe2_id].bp += s2; stats[m.equipe2_id].bc += s1;
+    if      (s1 > s2) { stats[m.equipe1_id].pts += 3; stats[m.equipe1_id].v++; stats[m.equipe2_id].d++; }
+    else if (s2 > s1) { stats[m.equipe2_id].pts += 3; stats[m.equipe2_id].v++; stats[m.equipe1_id].d++; }
+    else              { stats[m.equipe1_id].pts++; stats[m.equipe2_id].pts++; stats[m.equipe1_id].n++; stats[m.equipe2_id].n++; }
+  });
+  _matchs.filter(m => m.groupe === groupe).forEach(m => {
+    if (stats[m.equipe1_id] && m.bonus1) { stats[m.equipe1_id].bonus += m.bonus1; stats[m.equipe1_id].pts += m.bonus1; }
+    if (stats[m.equipe2_id] && m.bonus2) { stats[m.equipe2_id].bonus += m.bonus2; stats[m.equipe2_id].pts += m.bonus2; }
+  });
+  return Object.values(stats).sort((a, b) =>
+    b.pts - a.pts || (b.bp - b.bc) - (a.bp - a.bc) || b.bp - a.bp
+  );
 }
 
 /* ===== QR CODE ===== */

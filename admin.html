@@ -37,6 +37,7 @@
     <button class="admin-tab" id="atab-equipes" onclick="switchAdminTab('equipes')">👕 Équipes</button>
     <button class="admin-tab" id="atab-matchs" onclick="switchAdminTab('matchs')">⚽ Matchs</button>
     <button class="admin-tab" id="atab-phases" onclick="switchAdminTab('phases')">🥇 Phases</button>
+    <button class="admin-tab" id="atab-classement" onclick="switchAdminTab('classement')">📊 Classement</button>
     <button class="admin-tab" id="atab-qr" onclick="switchAdminTab('qr')">📱 QR Code</button>
   </div>
 
@@ -202,6 +203,12 @@
       <p class="section-title">Saisir les scores</p>
       <div id="matchs-admin-list"><p class="empty">Aucun match planifié.</p></div>
     </div>
+  </div>
+
+  <!-- CLASSEMENT ADMIN -->
+  <div id="panel-classement" class="page-section hidden">
+    <p class="section-title">Classement par poule</p>
+    <div id="classement-admin-list"><p class="empty">Sélectionne un tournoi pour voir le classement.</p></div>
   </div>
 
   <!-- PHASES FINALES ADMIN -->

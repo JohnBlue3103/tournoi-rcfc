@@ -322,6 +322,21 @@ function renderBracketAdmin() {
   ];
   const PHASE_LABELS = { quarts:'Quarts de finale', demies:'Demi-finales', petite_finale:'Petite finale', finale:'Finale', conso_demies:'Consolante — Demi-finales', conso_petite:'Consolante — Petite finale', conso_finale:'Consolante — Finale', classement:'Matchs de classement' };
   const TERRAINS = ['H1','H2','K1','K2'];
+
+  // Calcul heure de début recommandée : dernier match de poule + 17min slot + 15min tampon
+  const pouleHeures = _matchs.filter(m => m.phase === 'poule' && m.heure).map(m => m.heure).sort();
+  const debutPhasesHtml = (() => {
+    if (!pouleHeures.length) return '';
+    const [hh, mm] = pouleHeures[pouleHeures.length - 1].split(':').map(Number);
+    const total = hh * 60 + mm + 17 + 15;
+    const h = String(Math.floor(total / 60)).padStart(2, '0');
+    const m = String(total % 60).padStart(2, '0');
+    return `<div style="background:#004d9812;border:1.5px solid #004d9830;border-radius:8px;padding:.6rem 1rem;margin-bottom:1rem;font-size:.88rem;color:#004d98;font-weight:600">
+      🕐 Phases finales recommandées à partir de <strong>${h}:${m}</strong>
+      <span style="font-weight:400;color:#555"> (dernier match de poule ${pouleHeures[pouleHeures.length-1]} + 17min + 15min)</span>
+    </div>`;
+  })();
+
   const koMatchs = _matchs.filter(m => SECTIONS.flatMap(s => s.phases).includes(m.phase));
 
   if (!koMatchs.length) {
@@ -332,7 +347,7 @@ function renderBracketAdmin() {
   const eqOpts = `<option value="">— À définir —</option>` +
     _equipes.map(e => `<option value="${e.id}">${e.nom}</option>`).join('');
 
-  el.innerHTML = SECTIONS.map(sec => {
+  el.innerHTML = debutPhasesHtml + SECTIONS.map(sec => {
     const matchsSec = koMatchs.filter(m => sec.phases.includes(m.phase));
     if (!matchsSec.length) return '';
     return `

@@ -232,16 +232,8 @@ function renderMatchsAdmin() {
       <button class="filtre-btn${_filtreStatut==='termine'  ? ' active' : ''}" data-val="termine"  onclick="setFiltreStatut('termine')">Terminés <span class="filtre-count">${counts.termine}</span></button>
     </div>`;
 
-  const byPhaseGroupe = {};
-  matchsFiltres.forEach(m => {
-    const key = m.phase === 'poule' ? `poule_${m.groupe||'?'}` : m.phase;
-    (byPhaseGroupe[key] = byPhaseGroupe[key] || []).push(m);
-  });
-
-  const sections = [];
-  const groupes = [...new Set(matchsFiltres.filter(m=>m.phase==='poule').map(m=>m.groupe||'?'))].sort();
-  groupes.forEach(g => { if (byPhaseGroupe[`poule_${g}`]) sections.push({ label:`Poule ${g}`, key:`poule_${g}` }); });
-  ['quarts','demies','petite_finale','finale','conso_demies','conso_petite','conso_finale','classement'].forEach(p => { if (byPhaseGroupe[p]) sections.push({ label:PHASE_LABELS[p], key:p }); });
+  const PHASE_SHORT = { quarts:'Quarts', demies:'Demies', petite_finale:'Petite finale', finale:'Finale', conso_demies:'Conso. demies', conso_petite:'Conso. petite', conso_finale:'Conso. finale', classement:'Classement' };
+  const phaseLabel  = m => m.phase === 'poule' ? `Poule ${m.groupe||'?'}` : (PHASE_SHORT[m.phase] || m.phase);
 
   const matchCard = m => `
     <div class="match-edit-card" id="card-${m.id}">
@@ -284,6 +276,7 @@ function renderMatchsAdmin() {
             <option value="">— Arbitre —</option>
             ${TOUS_ARBITRES.map(a=>`<option value="${a}" ${m.arbitre===a?'selected':''}>${a}</option>`).join('')}
           </select>
+          <span style="font-size:.75rem;font-weight:700;color:#004d98;background:#004d9815;border:1px solid #004d9830;padding:.18rem .5rem;border-radius:5px;white-space:nowrap">${phaseLabel(m)}</span>
         </div>
         <select id="st-${m.id}" style="padding:.3rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-size:.82rem">
           <option value="planifie" ${m.statut==='planifie'?'selected':''}>Planifié</option>
@@ -295,17 +288,14 @@ function renderMatchsAdmin() {
       </div>
     </div>`;
 
-  const sort = arr => arr.slice().sort((a, b) => {
+  const sorted = matchsFiltres.slice().sort((a, b) => {
     if (a.heure && b.heure) return a.heure.localeCompare(b.heure);
     if (a.heure) return -1; if (b.heure) return 1;
     return (eqMap[a.equipe1_id]||'').localeCompare(eqMap[b.equipe1_id]||'');
   });
 
-  el.innerHTML = filtreBar + (sections.length
-    ? sections.map(s => `
-        <p class="groupe-title" style="margin:1rem 0 .4rem">${s.label}</p>
-        ${sort(byPhaseGroupe[s.key]).map(matchCard).join('')}
-      `).join('')
+  el.innerHTML = filtreBar + (sorted.length
+    ? sorted.map(matchCard).join('')
     : '<p class="empty" style="padding:1.5rem">Aucun match pour ce filtre.</p>');
 }
 

@@ -160,6 +160,15 @@ async function renameEquipe(id) {
   await loadEquipes();
 }
 
+async function renameEquipeInline(teamId, newNom) {
+  newNom = newNom.trim();
+  const e = _equipes.find(e => e.id === teamId);
+  if (!newNom || !e || e.nom === newNom) return;
+  await sb.from('equipes').update({ nom: newNom }).eq('id', teamId);
+  e.nom = newNom;
+  document.querySelectorAll(`[data-eid="${teamId}"]`).forEach(el => { el.value = newNom; });
+}
+
 async function addEquipe() {
   if (!_tid) { alert('Sélectionne un tournoi d\'abord.'); return; }
   const nom    = document.getElementById('eq-nom').value.trim();
@@ -241,9 +250,9 @@ function renderMatchsAdmin() {
     <div class="match-edit-card" id="card-${m.id}">
       <div class="match-edit-teams">
         ${m.phase === 'poule'
-          ? `<span class="item-label">${eqMap[m.equipe1_id]||'?'}</span>
+          ? `<input class="equipe-nom-input" data-eid="${m.equipe1_id}" value="${(eqMap[m.equipe1_id]||'?').replace(/"/g,'&quot;')}" onchange="renameEquipeInline('${m.equipe1_id}',this.value)" style="max-width:140px">
              <span style="color:var(--muted);font-weight:700;margin:0 .5rem">vs</span>
-             <span class="item-label">${eqMap[m.equipe2_id]||'?'}</span>`
+             <input class="equipe-nom-input" data-eid="${m.equipe2_id}" value="${(eqMap[m.equipe2_id]||'?').replace(/"/g,'&quot;')}" onchange="renameEquipeInline('${m.equipe2_id}',this.value)" style="max-width:140px">`
           : `<select id="eq1-${m.id}" style="padding:.3rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-size:.85rem;max-width:130px">
                <option value="">— Équipe 1 —</option>
                ${_equipes.map(e=>`<option value="${e.id}" ${m.equipe1_id===e.id?'selected':''}>${e.nom}</option>`).join('')}

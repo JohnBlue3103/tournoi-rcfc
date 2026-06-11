@@ -176,17 +176,18 @@ function renderAgenda() {
 
   const sections  = [];
   const groupes   = [...new Set(_matchs.filter(m => m.phase === 'poule').map(m => m.groupe).filter(Boolean))].sort();
+  const POULE_COLORS = { A: 'pt-A', B: 'pt-B', C: 'pt-C' };
   groupes.forEach(g => {
     const list = byPhase['poule_' + g] || [];
-    if (list.length) sections.push({ label: `Poule ${g}`, matchs: list });
+    if (list.length) sections.push({ label: `Poule ${g}`, matchs: list, cls: POULE_COLORS[g] || '' });
   });
   ['quarts','demies','petite_finale','finale','conso_demies','conso_petite','conso_finale','classement'].forEach(p => {
     const list = byPhase[p] || [];
-    if (list.length) sections.push({ label: PHASE_LABELS[p], matchs: list });
+    if (list.length) sections.push({ label: PHASE_LABELS[p], matchs: list, cls: 'pt-ko' });
   });
 
   wrap.innerHTML = sections.map(s => `
-    <p class="phase-title">${s.label}</p>
+    <p class="phase-title ${s.cls||''}">${s.label}</p>
     ${s.matchs.map(m => renderMatchCard(m, eqMap)).join('')}
   `).join('');
 }

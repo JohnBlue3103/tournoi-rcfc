@@ -310,7 +310,7 @@ function renderMatchsAdmin() {
     </div>`;
 
   const PHASE_SHORT  = { quarts:'Quarts', demies:'Demies', petite_finale:'Petite finale', finale:'Finale', conso_demies:'Conso. demies', conso_finale:'Conso. finale', classement:'Classement' };
-  const GROUPE_COLORS = { A:'#004d98', B:'#a50044', C:'#2d7a2d', D:'#b86c00' };
+  const GROUPE_COLORS = { A:'#2b4878', B:'#7d1e2e', C:'#2d7a2d', D:'#b86c00' };
   const phaseLabel   = m => m.phase === 'poule' ? `Poule ${m.groupe||'?'}` : (PHASE_SHORT[m.phase] || m.phase);
   const phaseColor   = m => m.phase === 'poule' ? (GROUPE_COLORS[m.groupe] || '#555') : '#555';
 

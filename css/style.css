@@ -1,9 +1,10 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --primary:   #004d98;
-  --primary-l: #1565c0;
-  --accent:    #a50044;
+  --primary:   #2b4878;
+  --primary-l: #3a5f9a;
+  --accent:    #7d1e2e;
+  --gold:      #f0b428;
   --bg:        #f0f2f8;
   --surface:   #fff;
   --border:    #dce3ee;
@@ -24,13 +25,22 @@ body {
 
 /* ===== HEADER ===== */
 .header {
-  background: var(--primary);
+  background: linear-gradient(135deg, var(--primary) 60%, #1e3560 100%);
   color: #fff;
-  padding: 1.25rem 1rem .75rem;
+  padding: 1.1rem 1rem .75rem;
   text-align: center;
+  border-bottom: 3px solid var(--accent);
 }
-.header h1 { font-size: 1.4rem; font-weight: 700; }
-.header p  { font-size: .85rem; opacity: .8; margin-top: .2rem; }
+.header-logo {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: contain;
+  margin-bottom: .35rem;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,.35));
+}
+.header h1 { font-size: 1.25rem; font-weight: 800; letter-spacing: .01em; }
+.header p  { font-size: .82rem; opacity: .85; margin-top: .2rem; }
 
 .header-tournoi {
   position: relative;
@@ -248,8 +258,8 @@ body {
   color: var(--muted);
   margin: 1rem 0 .5rem;
 }
-.phase-title.pt-A { color: #004d98; border-left: 3px solid #004d98; padding-left: .5rem; }
-.phase-title.pt-B { color: #a50044; border-left: 3px solid #a50044; padding-left: .5rem; }
+.phase-title.pt-A { color: #2b4878; border-left: 3px solid #2b4878; padding-left: .5rem; }
+.phase-title.pt-B { color: #7d1e2e; border-left: 3px solid #7d1e2e; padding-left: .5rem; }
 .phase-title.pt-C { color: #2d7a2d; border-left: 3px solid #2d7a2d; padding-left: .5rem; }
 .phase-title.pt-D { color: #b86c00; border-left: 3px solid #b86c00; padding-left: .5rem; }
 .phase-title.pt-ko { color: #7c4dbb; border-left: 3px solid #7c4dbb; padding-left: .5rem; }
@@ -611,7 +621,7 @@ body {
   margin: 1.4rem 0 .75rem;
   display: inline-block;
 }
-.bst-principal { background: #e3eeff; color: var(--primary); }
+.bst-principal { background: #e8edf8; color: var(--primary); }
 .bst-class58   { background: #fff7ed; color: #b45309; }
 .bst-conso     { background: #f3f3f3; color: #555; }
 .bst-class     { background: #fff4e5; color: #b45309; }

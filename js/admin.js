@@ -191,86 +191,115 @@ async function loadMatchsAdmin() {
   renderMatchsAdmin();
 }
 
+let _filtreStatut = 'tous';
+
+function setFiltreStatut(val) {
+  _filtreStatut = val;
+  document.querySelectorAll('.filtre-btn').forEach(b => b.classList.toggle('active', b.dataset.val === val));
+  renderMatchsAdmin();
+}
+
 function renderMatchsAdmin() {
   const el    = document.getElementById('matchs-admin-list');
   const eqMap = Object.fromEntries(_equipes.map(e => [e.id, e.nom]));
   if (!_matchs.length) { el.innerHTML = '<p class="empty">Aucun match. Utilise "Générer tous les matchs" ou ajoute-en un manuellement.</p>'; return; }
 
-  const PHASE_ORDER  = ['poule','quarts','demies','petite_finale','finale','conso_demies','conso_petite','conso_finale','classement'];
   const PHASE_LABELS = { poule:'Poules', quarts:'Quarts de finale', demies:'Demi-finales', petite_finale:'Petite finale', finale:'Finale', conso_demies:'Consolante — Demi-finales', conso_petite:'Consolante — Petite finale', conso_finale:'Consolante — Finale', classement:'Matchs de classement' };
   const TERRAINS     = ['H1', 'H2', 'K1', 'K2'];
   const TOUS_ARBITRES = ['Lucie', 'Fred', 'Audelyne', 'Emmanuel', 'Damien', 'Brice'];
 
+  const matchsFiltres = _filtreStatut === 'tous' ? _matchs : _matchs.filter(m => m.statut === _filtreStatut);
+
+  const counts = {
+    tous:      _matchs.length,
+    planifie:  _matchs.filter(m => m.statut === 'planifie').length,
+    en_cours:  _matchs.filter(m => m.statut === 'en_cours').length,
+    termine:   _matchs.filter(m => m.statut === 'termine').length,
+  };
+
+  const filtreBar = `
+    <div class="filtre-bar">
+      <button class="filtre-btn${_filtreStatut==='tous'     ? ' active' : ''}" data-val="tous"     onclick="setFiltreStatut('tous')">Tous <span class="filtre-count">${counts.tous}</span></button>
+      <button class="filtre-btn${_filtreStatut==='planifie' ? ' active' : ''}" data-val="planifie" onclick="setFiltreStatut('planifie')">Planifiés <span class="filtre-count">${counts.planifie}</span></button>
+      <button class="filtre-btn${_filtreStatut==='en_cours' ? ' active' : ''}" data-val="en_cours" onclick="setFiltreStatut('en_cours')">En cours <span class="filtre-count">${counts.en_cours}</span></button>
+      <button class="filtre-btn${_filtreStatut==='termine'  ? ' active' : ''}" data-val="termine"  onclick="setFiltreStatut('termine')">Terminés <span class="filtre-count">${counts.termine}</span></button>
+    </div>`;
+
   const byPhaseGroupe = {};
-  _matchs.forEach(m => {
+  matchsFiltres.forEach(m => {
     const key = m.phase === 'poule' ? `poule_${m.groupe||'?'}` : m.phase;
     (byPhaseGroupe[key] = byPhaseGroupe[key] || []).push(m);
   });
 
   const sections = [];
-  const groupes = [...new Set(_matchs.filter(m=>m.phase==='poule').map(m=>m.groupe||'?'))].sort();
+  const groupes = [...new Set(matchsFiltres.filter(m=>m.phase==='poule').map(m=>m.groupe||'?'))].sort();
   groupes.forEach(g => { if (byPhaseGroupe[`poule_${g}`]) sections.push({ label:`Poule ${g}`, key:`poule_${g}` }); });
   ['quarts','demies','petite_finale','finale','conso_demies','conso_petite','conso_finale','classement'].forEach(p => { if (byPhaseGroupe[p]) sections.push({ label:PHASE_LABELS[p], key:p }); });
 
-  el.innerHTML = sections.map(s => `
-    <p class="groupe-title" style="margin:1rem 0 .4rem">${s.label}</p>
-    ${byPhaseGroupe[s.key].slice().sort((a, b) => {
-      if (a.heure && b.heure) return a.heure.localeCompare(b.heure);
-      if (a.heure) return -1;
-      if (b.heure) return 1;
-      return (eqMap[a.equipe1_id]||'').localeCompare(eqMap[b.equipe1_id]||'') || (eqMap[a.equipe2_id]||'').localeCompare(eqMap[b.equipe2_id]||'');
-    }).map(m => `
-      <div class="match-edit-card" id="card-${m.id}">
-        <div class="match-edit-teams">
-          ${m.phase === 'poule'
-            ? `<span class="item-label">${eqMap[m.equipe1_id]||'?'}</span>
-               <span style="color:var(--muted);font-weight:700;margin:0 .5rem">vs</span>
-               <span class="item-label">${eqMap[m.equipe2_id]||'?'}</span>`
-            : `<select id="eq1-${m.id}" style="padding:.3rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-size:.85rem;max-width:130px">
-                 <option value="">— Équipe 1 —</option>
-                 ${_equipes.map(e=>`<option value="${e.id}" ${m.equipe1_id===e.id?'selected':''}>${e.nom}</option>`).join('')}
-               </select>
-               <span style="color:var(--muted);font-weight:700;margin:0 .4rem">vs</span>
-               <select id="eq2-${m.id}" style="padding:.3rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-size:.85rem;max-width:130px">
-                 <option value="">— Équipe 2 —</option>
-                 ${_equipes.map(e=>`<option value="${e.id}" ${m.equipe2_id===e.id?'selected':''}>${e.nom}</option>`).join('')}
-               </select>`}
-          <span class="status-badge status-${m.statut}" style="margin-left:.5rem">${m.statut.replace('_',' ')}</span>
+  const matchCard = m => `
+    <div class="match-edit-card" id="card-${m.id}">
+      <div class="match-edit-teams">
+        ${m.phase === 'poule'
+          ? `<span class="item-label">${eqMap[m.equipe1_id]||'?'}</span>
+             <span style="color:var(--muted);font-weight:700;margin:0 .5rem">vs</span>
+             <span class="item-label">${eqMap[m.equipe2_id]||'?'}</span>`
+          : `<select id="eq1-${m.id}" style="padding:.3rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-size:.85rem;max-width:130px">
+               <option value="">— Équipe 1 —</option>
+               ${_equipes.map(e=>`<option value="${e.id}" ${m.equipe1_id===e.id?'selected':''}>${e.nom}</option>`).join('')}
+             </select>
+             <span style="color:var(--muted);font-weight:700;margin:0 .4rem">vs</span>
+             <select id="eq2-${m.id}" style="padding:.3rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-size:.85rem;max-width:130px">
+               <option value="">— Équipe 2 —</option>
+               ${_equipes.map(e=>`<option value="${e.id}" ${m.equipe2_id===e.id?'selected':''}>${e.nom}</option>`).join('')}
+             </select>`}
+        <span class="status-badge status-${m.statut}" style="margin-left:.5rem">${m.statut.replace('_',' ')}</span>
+      </div>
+      <div class="match-edit-fields">
+        <div style="display:flex;align-items:center;gap:.4rem">
+          <span style="font-size:.8rem;color:var(--muted)">🕐</span>
+          <input type="time" id="h-${m.id}" value="${m.heure||''}" style="width:100px;padding:.3rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-size:.85rem">
         </div>
-        <div class="match-edit-fields">
-          <div style="display:flex;align-items:center;gap:.4rem">
-            <span style="font-size:.8rem;color:var(--muted)">🕐</span>
-            <input type="time" id="h-${m.id}" value="${m.heure||''}" style="width:100px;padding:.3rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-size:.85rem">
-          </div>
-          <div style="display:flex;align-items:center;gap:.4rem">
-            <span style="font-size:.8rem;color:var(--muted)">📍</span>
-            <select id="tr-${m.id}" style="padding:.3rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-size:.85rem">
-              <option value="">— Terrain —</option>
-              ${TERRAINS.map(t=>`<option value="${t}" ${m.terrain===t?'selected':''}>${t}</option>`).join('')}
-            </select>
-          </div>
-          <div style="display:flex;align-items:center;gap:.4rem">
-            <input type="number" min="0" id="s1-${m.id}" value="${m.score1??0}" style="width:48px;text-align:center;padding:.3rem;border:1.5px solid var(--border);border-radius:6px;font-size:1rem;font-weight:700">
-            <span style="font-weight:700;color:var(--muted)">–</span>
-            <input type="number" min="0" id="s2-${m.id}" value="${m.score2??0}" style="width:48px;text-align:center;padding:.3rem;border:1.5px solid var(--border);border-radius:6px;font-size:1rem;font-weight:700">
-          </div>
-          <div style="display:flex;align-items:center;gap:.4rem">
-            <span style="font-size:.8rem;color:var(--muted)">🟨</span>
-            <select id="ar-${m.id}" style="padding:.3rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-size:.85rem">
-              <option value="">— Arbitre —</option>
-              ${TOUS_ARBITRES.map(a=>`<option value="${a}" ${m.arbitre===a?'selected':''}>${a}</option>`).join('')}
-            </select>
-          </div>
-          <select id="st-${m.id}" style="padding:.3rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-size:.82rem">
-            <option value="planifie" ${m.statut==='planifie'?'selected':''}>Planifié</option>
-            <option value="en_cours" ${m.statut==='en_cours'?'selected':''}>En cours</option>
-            <option value="termine"  ${m.statut==='termine' ?'selected':''}>Terminé</option>
+        <div style="display:flex;align-items:center;gap:.4rem">
+          <span style="font-size:.8rem;color:var(--muted)">📍</span>
+          <select id="tr-${m.id}" style="padding:.3rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-size:.85rem">
+            <option value="">— Terrain —</option>
+            ${TERRAINS.map(t=>`<option value="${t}" ${m.terrain===t?'selected':''}>${t}</option>`).join('')}
           </select>
-          <button class="btn-primary btn-sm" onclick="saveMatch('${m.id}')">✓ Sauvegarder</button>
-          <button class="btn-danger btn-sm"  onclick="deleteMatch('${m.id}')">✕</button>
         </div>
-      </div>`).join('')}
-  `).join('');
+        <div style="display:flex;align-items:center;gap:.4rem">
+          <input type="number" min="0" id="s1-${m.id}" value="${m.score1??0}" style="width:48px;text-align:center;padding:.3rem;border:1.5px solid var(--border);border-radius:6px;font-size:1rem;font-weight:700">
+          <span style="font-weight:700;color:var(--muted)">–</span>
+          <input type="number" min="0" id="s2-${m.id}" value="${m.score2??0}" style="width:48px;text-align:center;padding:.3rem;border:1.5px solid var(--border);border-radius:6px;font-size:1rem;font-weight:700">
+        </div>
+        <div style="display:flex;align-items:center;gap:.4rem">
+          <span style="font-size:.8rem;color:var(--muted)">🟨</span>
+          <select id="ar-${m.id}" style="padding:.3rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-size:.85rem">
+            <option value="">— Arbitre —</option>
+            ${TOUS_ARBITRES.map(a=>`<option value="${a}" ${m.arbitre===a?'selected':''}>${a}</option>`).join('')}
+          </select>
+        </div>
+        <select id="st-${m.id}" style="padding:.3rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-size:.82rem">
+          <option value="planifie" ${m.statut==='planifie'?'selected':''}>Planifié</option>
+          <option value="en_cours" ${m.statut==='en_cours'?'selected':''}>En cours</option>
+          <option value="termine"  ${m.statut==='termine' ?'selected':''}>Terminé</option>
+        </select>
+        <button class="btn-primary btn-sm" onclick="saveMatch('${m.id}')">✓ Sauvegarder</button>
+        <button class="btn-danger btn-sm"  onclick="deleteMatch('${m.id}')">✕</button>
+      </div>
+    </div>`;
+
+  const sort = arr => arr.slice().sort((a, b) => {
+    if (a.heure && b.heure) return a.heure.localeCompare(b.heure);
+    if (a.heure) return -1; if (b.heure) return 1;
+    return (eqMap[a.equipe1_id]||'').localeCompare(eqMap[b.equipe1_id]||'');
+  });
+
+  el.innerHTML = filtreBar + (sections.length
+    ? sections.map(s => `
+        <p class="groupe-title" style="margin:1rem 0 .4rem">${s.label}</p>
+        ${sort(byPhaseGroupe[s.key]).map(matchCard).join('')}
+      `).join('')
+    : '<p class="empty" style="padding:1.5rem">Aucun match pour ce filtre.</p>');
 }
 
 /* ===== BRACKET ADMIN (onglet Phases) ===== */

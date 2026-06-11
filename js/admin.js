@@ -488,7 +488,7 @@ async function genererRencontres() {
       .map(e => e.id)
   );
 
-  const PREMIER_SLOT = 17 * 60 + 45;
+  const PREMIER_SLOT = 17 * 60 + 30;
   const teamBusy    = {}; // teamId → Set<mins>
   const terrainUsed = {}; // mins → terrain[]
 

@@ -569,27 +569,21 @@ async function genererRencontres() {
   const PAUSE_FIN = toMins(repasFin);
   const toTime    = m => `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
 
-  // Équipes absentes au premier créneau (organisation)
-  const SKIP_PREMIER_SLOT = ['fc merguez', 'beltranos', 'tefoucee'];
-  const skipIds = new Set(
-    _equipes
-      .filter(e => SKIP_PREMIER_SLOT.some(n => e.nom.toLowerCase().includes(n)))
-      .map(e => e.id)
-  );
+  // Normalise les accents pour la comparaison de noms
+  const normalize  = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  const ORG_NOMS   = ['fc merguez', 'beltranos', 'tefoucee'];
+  const orgIds     = new Set(_equipes.filter(e => ORG_NOMS.some(n => normalize(e.nom).includes(n))).map(e => e.id));
+
+  // Équipes absentes au premier créneau (organisation) = mêmes équipes
+  const skipIds    = new Set([...orgIds]);
 
   const PREMIER_SLOT = toMins(debutVal);
-  const teamBusy    = {}; // teamId → Set<mins> des créneaux bloqués
+  const teamBusy    = {};
 
   // Pré-marquer le premier créneau pour les équipes absentes
   skipIds.forEach(id => {
     (teamBusy[id] = teamBusy[id] || new Set()).add(PREMIER_SLOT);
   });
-
-  // Scheduler créneau par créneau : remplit TOUJOURS les 4 terrains.
-  // Priorité 1 : équipes au repos (pas de match consécutif)
-  // Équipes organisation : toujours sur H1 ou H2
-  const ORG_NOMS   = ['fc merguez', 'beltranos', 'tefoucee'];
-  const orgIds     = new Set(_equipes.filter(e => ORG_NOMS.some(n => e.nom.toLowerCase().includes(n))).map(e => e.id));
   const isOrgMatch = m => orgIds.has(m.equipe1_id) || orgIds.has(m.equipe2_id);
   const TERRAINS_H = new Set(['H1','H2']); // terrains acceptant les équipes orga
 

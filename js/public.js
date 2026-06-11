@@ -285,8 +285,10 @@ function renderClassements() {
     return;
   }
 
+  const allRows = {};
   wrap.innerHTML = groupes.map(g => {
     const rows = calcClassement(g);
+    allRows[g] = rows;
     return `
       <div class="groupe-block">
         <p class="groupe-title">Poule ${g}</p>
@@ -310,7 +312,27 @@ function renderClassements() {
           </tbody>
         </table>
       </div>`;
-  }).join('');
+  }).join('') + (() => {
+    const tiers = groupes.map(g => allRows[g]?.[2] ? { ...allRows[g][2], poule: g } : null).filter(Boolean);
+    if (tiers.length < 2) return '';
+    tiers.sort((a,b) => b.pts - a.pts || (b.bp-b.bc)-(a.bp-a.bc) || b.bp - a.bp);
+    return `
+      <div class="groupe-block" style="margin-top:1.25rem">
+        <p class="groupe-title" style="color:var(--accent)">🏅 Meilleurs 3èmes</p>
+        <table class="standings-table">
+          <thead><tr><th>Équipe</th><th>Poule</th><th>BP</th><th>BC</th><th>Diff</th><th class="pts-col">Pts</th></tr></thead>
+          <tbody>
+            ${tiers.map((r,i) => `
+              <tr class="${i < 2 ? 'qualifie' : ''}">
+                <td>${r.nom}</td><td>Poule ${r.poule}</td>
+                <td>${r.bp}</td><td>${r.bc}</td>
+                <td>${r.bp-r.bc >= 0?'+':''}${r.bp-r.bc}</td>
+                <td class="pts-col">${r.pts}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  })();
 }
 
 function calcClassement(groupe) {

@@ -777,7 +777,30 @@ function renderClassementAdmin() {
             </tbody>
           </table>
         </div>`;
-    }).join('')}`;
+    }).join('')}
+    ${(() => {
+      const tiers = groupes.map(g => { const rows = calcClassementAdmin(g); return rows[2] ? { ...rows[2], poule: g } : null; }).filter(Boolean);
+      if (tiers.length < 2) return '';
+      tiers.sort((a,b) => b.pts - a.pts || (b.bp-b.bc)-(a.bp-a.bc) || b.bp - a.bp);
+      return `
+        <hr style="margin:1.25rem 0;border:none;border-top:1px solid var(--border)">
+        <div class="groupe-block">
+          <p class="groupe-title" style="color:var(--accent)">🏅 Meilleurs 3èmes</p>
+          <table class="standings-table">
+            <thead><tr><th>Équipe</th><th>Poule</th><th>BP</th><th>BC</th><th>Diff</th><th class="pts-col">Pts</th></tr></thead>
+            <tbody>
+              ${tiers.map((r,i) => `
+                <tr class="${i < 2 ? 'qualifie' : ''}">
+                  <td>${r.nom}</td><td>Poule ${r.poule}</td>
+                  <td>${r.bp}</td><td>${r.bc}</td>
+                  <td>${r.bp-r.bc >= 0?'+':''}${r.bp-r.bc}</td>
+                  <td class="pts-col">${r.pts}</td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+          <p style="font-size:.78rem;color:var(--muted);margin-top:.4rem">Les 2 premiers (en vert) rejoignent les quarts de finale.</p>
+        </div>`;
+    })()}`;
 }
 
 async function saveTeamBonus(equipeId, val) {

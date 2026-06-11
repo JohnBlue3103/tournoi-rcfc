@@ -472,7 +472,7 @@ async function genererRencontres() {
   const toTime    = m => `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
 
   // Équipes absentes au premier créneau (organisation)
-  const SKIP_PREMIER_SLOT = ['fc merguez', 'beltranos', "l'tefoucée", 'tefoucée'];
+  const SKIP_PREMIER_SLOT = ['fc merguez', 'beltranos', 'tefoucee'];
   const skipIds = new Set(
     _equipes
       .filter(e => SKIP_PREMIER_SLOT.some(n => e.nom.toLowerCase().includes(n)))

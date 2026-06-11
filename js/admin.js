@@ -562,11 +562,7 @@ async function genererRencontres() {
   const pauseMin  = parseInt(document.getElementById('param-pause')?.value)  || 5;
   const SLOT_MIN  = duree + pauseMin;
   const debutVal  = document.getElementById('param-debut')?.value  || '17:30';
-  const repasDeb  = document.getElementById('param-repas-deb')?.value || '20:30';
-  const repasFin  = document.getElementById('param-repas-fin')?.value || '21:30';
   const toMins    = t => { const [h,m]=t.split(':'); return +h*60+ +m; };
-  const PAUSE_DEB = toMins(repasDeb);
-  const PAUSE_FIN = toMins(repasFin);
   const toTime    = m => `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
 
   // Normalise les accents pour la comparaison de noms
@@ -592,8 +588,6 @@ async function genererRencontres() {
   let mins = PREMIER_SLOT;
 
   while (remaining.length > 0) {
-    if (mins >= PAUSE_DEB && mins < PAUSE_FIN) { mins = PAUSE_FIN; continue; }
-
     const slotBusy = new Set();
 
     for (let ti = 0; ti < TERRAINS.length && remaining.length > 0; ti++) {

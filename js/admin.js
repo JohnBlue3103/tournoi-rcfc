@@ -579,7 +579,8 @@ async function saveMatch(id) {
   if (eq1sel) update.equipe1_id = eq1sel.value || null;
   if (eq2sel) update.equipe2_id = eq2sel.value || null;
   await sb.from('matchs').update(update).eq('id', id);
-  loadMatchsAdmin();
+  await loadMatchsAdmin();
+  renderClassementAdmin();
 }
 
 async function deleteMatch(id) {

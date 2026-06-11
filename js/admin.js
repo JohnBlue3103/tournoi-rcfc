@@ -237,6 +237,20 @@ async function addEquipe() {
   loadEquipes();
 }
 
+async function importEquipes() {
+  if (!_tid) { alert('Sélectionne un tournoi d\'abord.'); return; }
+  const msg  = document.getElementById('eq-import-msg');
+  const raw  = document.getElementById('eq-import').value;
+  const noms = raw.split('\n').map(l => l.trim()).filter(Boolean);
+  if (!noms.length) { showMsg(msg, 'Aucun nom détecté.', 'error'); return; }
+  const inserts = noms.map(nom => ({ tournament_id: _tid, nom }));
+  const { error } = await sb.from('equipes').insert(inserts);
+  if (error) { showMsg(msg, error.message, 'error'); return; }
+  document.getElementById('eq-import').value = '';
+  showMsg(msg, `${noms.length} équipe(s) ajoutée(s) !`, 'success');
+  loadEquipes();
+}
+
 async function deleteEquipe(id) {
   await sb.from('equipes').delete().eq('id', id);
   loadEquipes();
@@ -543,7 +557,7 @@ async function genererRencontres() {
 
   // Assigner heure / terrain / arbitre sans conflit d'équipe
   const TERRAINS  = ['H1', 'H2', 'K1', 'K2'];
-  const ARBITRES  = ['Lucie', 'Fred', 'Audelyne', 'Emmanuel'];
+  const ARBITRES  = ['Lucie', 'Fred', 'Audelyne', 'Emmanuel', 'Brice'];
   const duree     = parseInt(document.getElementById('param-duree')?.value)  || 12;
   const pauseMin  = parseInt(document.getElementById('param-pause')?.value)  || 5;
   const SLOT_MIN  = duree + pauseMin;

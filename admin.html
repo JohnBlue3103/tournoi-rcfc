@@ -90,6 +90,13 @@
     <p id="eq-msg" class="alert hidden"></p>
     <button class="btn-primary" onclick="addEquipe()">➕ Ajouter</button>
 
+    <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)">
+      <p style="font-size:.85rem;font-weight:600;margin-bottom:.4rem">Import en masse (un nom par ligne)</p>
+      <textarea id="eq-import" rows="6" placeholder="Frimake FC&#10;Les tardigrades&#10;Rangueil All Stars&#10;..." style="width:100%;padding:.5rem;border:1.5px solid var(--border);border-radius:8px;font-size:.85rem;resize:vertical;font-family:inherit"></textarea>
+      <button class="btn-secondary" style="margin-top:.4rem" onclick="importEquipes()">📋 Importer toutes les équipes</button>
+      <p id="eq-import-msg" class="alert hidden" style="margin-top:.4rem"></p>
+    </div>
+
     <div style="margin-top:1.25rem">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-bottom:.6rem">
         <p class="section-title" style="margin:0">Équipes inscrites</p>

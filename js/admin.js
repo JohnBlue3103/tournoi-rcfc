@@ -355,15 +355,49 @@ function renderBracketAdmin() {
 }
 
 async function saveBracketMatch(id) {
-  const eq1   = document.getElementById('beq1-' + id)?.value || null;
-  const eq2   = document.getElementById('beq2-' + id)?.value || null;
-  const heure  = document.getElementById('bh-'  + id)?.value || null;
-  const terrain= document.getElementById('btr-' + id)?.value || null;
+  const eq1    = document.getElementById('beq1-' + id)?.value || null;
+  const eq2    = document.getElementById('beq2-' + id)?.value || null;
+  const heure  = document.getElementById('bh-'   + id)?.value || null;
+  const terrain= document.getElementById('btr-'  + id)?.value || null;
   const score1 = parseInt(document.getElementById('bs1-' + id)?.value) || 0;
   const score2 = parseInt(document.getElementById('bs2-' + id)?.value) || 0;
-  const statut = document.getElementById('bst-' + id)?.value;
+  const statut = document.getElementById('bst-'  + id)?.value;
   await sb.from('matchs').update({ equipe1_id: eq1, equipe2_id: eq2, heure, terrain, score1, score2, statut }).eq('id', id);
+  // Recharger puis propager le résultat dans le bracket
+  await loadMatchsAdmin();
+  const saved = _matchs.find(m => m.id === id);
+  if (saved && saved.statut === 'termine') await propagateBracket(saved);
   loadMatchsAdmin().then(renderBracketAdmin);
+}
+
+async function propagateBracket(m) {
+  const s1 = m.score1 || 0, s2 = m.score2 || 0;
+  if (s1 === s2) return; // match nul : pas de propagation automatique
+  const winner = s1 > s2 ? m.equipe1_id : m.equipe2_id;
+  const loser  = s1 > s2 ? m.equipe2_id : m.equipe1_id;
+  const byCreated = (a, b) => a.created_at.localeCompare(b.created_at);
+
+  if (m.phase === 'quarts') {
+    const quarts = _matchs.filter(q => q.phase === 'quarts').sort(byCreated);
+    const idx    = quarts.findIndex(q => q.id === m.id);
+    const demies = _matchs.filter(d => d.phase === 'demies').sort(byCreated);
+    const target = demies[Math.floor(idx / 2)];
+    if (target) {
+      const slot = idx % 2 === 0 ? { equipe1_id: winner } : { equipe2_id: winner };
+      await sb.from('matchs').update(slot).eq('id', target.id);
+    }
+  }
+
+  if (m.phase === 'demies') {
+    const demies = _matchs.filter(d => d.phase === 'demies').sort(byCreated);
+    const idx    = demies.findIndex(d => d.id === m.id);
+    const wSlot  = idx === 0 ? { equipe1_id: winner } : { equipe2_id: winner };
+    const lSlot  = idx === 0 ? { equipe1_id: loser  } : { equipe2_id: loser  };
+    const finale = _matchs.find(f => f.phase === 'finale');
+    const petite = _matchs.find(p => p.phase === 'petite_finale');
+    if (finale) await sb.from('matchs').update(wSlot).eq('id', finale.id);
+    if (petite) await sb.from('matchs').update(lSlot).eq('id', petite.id);
+  }
 }
 
 async function genererRencontres() {

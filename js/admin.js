@@ -396,15 +396,41 @@ async function genererRencontres() {
   });
 
   if (!inserts.length) {
-    showMsg(msg, 'Tous les matchs de poule existent déjà — vérification des horaires…', 'success');
-    await planifierHoraires('17:45');
+    showMsg(msg, 'Tous les matchs de poule existent déjà.', 'success');
+    loadMatchsAdmin();
     return;
   }
+
+  // Assigner heure / terrain / arbitre directement dans les inserts
+  const TERRAINS  = ['H1', 'H2', 'K1', 'K2'];
+  const ARBITRES  = ['Lucie', 'Fred', 'Audelyne', 'Emmanuel'];
+  const SLOT_MIN  = 20; // 15 min match + 5 min pause
+  const PAUSE_DEB = 20 * 60 + 30;
+  const PAUSE_FIN = 21 * 60 + 30;
+
+  // Reprendre après le dernier horaire déjà planifié (si matchs existants)
+  const derniere = _matchs.filter(m => m.phase === 'poule' && m.heure)
+    .map(m => { const [h,mn] = m.heure.split(':').map(Number); return h*60+mn; })
+    .reduce((acc, v) => Math.max(acc, v), -1);
+  let mins    = derniere >= 0 ? derniere + SLOT_MIN : 17 * 60 + 45;
+  let slotIdx = derniere >= 0 ? _matchs.filter(m => m.phase === 'poule' && m.heure).length : 0;
+
+  inserts.forEach(m => {
+    if (mins >= PAUSE_DEB && mins < PAUSE_FIN) {
+      mins    = PAUSE_FIN;
+      slotIdx = Math.ceil(slotIdx / 4) * 4;
+    }
+    m.terrain = TERRAINS[slotIdx % 4];
+    m.arbitre = ARBITRES[slotIdx % 4];
+    m.heure   = `${String(Math.floor(mins / 60)).padStart(2, '0')}:${String(mins % 60).padStart(2, '0')}`;
+    slotIdx++;
+    if (slotIdx % 4 === 0) mins += SLOT_MIN;
+  });
+
   const { error } = await sb.from('matchs').insert(inserts);
   if (error) { showMsg(msg, error.message, 'error'); return; }
-  showMsg(msg, `${inserts.length} match(s) générés — planification en cours…`, 'success');
-  await loadMatchsAdmin();
-  await planifierHoraires('17:45');
+  showMsg(msg, `${inserts.length} match(s) générés avec horaires à partir de 17h45 !`, 'success');
+  loadMatchsAdmin();
 }
 
 async function genererPhasesFinales() {

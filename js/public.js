@@ -11,9 +11,8 @@ const PHASE_LABELS = {
   demies:        'Demi-finales',
   petite_finale: 'Petite finale',
   finale:        'Finale',
-  class_demies:  'Classement 5e-8e — Demi-finales',
-  class_5e:      'Match pour la 5e place',
-  class_7e:      'Match pour la 7e place',
+  class_5e:      'Match 5e-6e place',
+  class_7e:      'Match 7e-8e place',
   conso_demies:  'Consolante — Demi-finales',
   conso_petite:  'Consolante — Petite finale',
   conso_finale:  'Consolante — Finale',
@@ -184,7 +183,7 @@ function renderAgenda() {
     const list = byPhase['poule_' + g] || [];
     if (list.length) sections.push({ label: `Poule ${g}`, matchs: list, cls: POULE_COLORS[g] || '' });
   });
-  ['quarts','demies','petite_finale','finale','class_demies','class_5e','class_7e','conso_demies','conso_petite','conso_finale','classement'].forEach(p => {
+  ['quarts','demies','petite_finale','finale','class_5e','class_7e','conso_demies','conso_petite','conso_finale','classement'].forEach(p => {
     const list = byPhase[p] || [];
     if (list.length) sections.push({ label: PHASE_LABELS[p], matchs: list, cls: 'pt-ko' });
   });
@@ -221,7 +220,7 @@ function renderPhaseFinales() {
   const eqMap = Object.fromEntries(_equipes.map(e => [e.id, e.nom]));
 
   const KO       = ['quarts', 'demies', 'petite_finale', 'finale'];
-  const CLASS58  = ['class_demies', 'class_5e', 'class_7e'];
+  const CLASS58  = ['class_5e', 'class_7e'];
   const CONSO    = ['conso_demies', 'conso_petite', 'conso_finale'];
   const CLASS    = ['classement'];
   const allPhases = [...KO, ...CLASS58, ...CONSO, ...CLASS];

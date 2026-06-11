@@ -102,6 +102,30 @@
     <div class="gen-block">
       <p class="section-title" style="margin-bottom:.4rem">Générer les rencontres de poule</p>
       <p style="font-size:.85rem;color:#666;margin-bottom:.75rem">Crée automatiquement tous les matchs (chaque équipe joue contre toutes les autres de sa poule).</p>
+
+      <div style="display:flex;flex-wrap:wrap;gap:.75rem;margin-bottom:.75rem;align-items:flex-end">
+        <div class="form-group" style="margin:0;min-width:120px">
+          <label style="font-size:.8rem">⏱ Durée match (min)</label>
+          <input id="param-duree" type="number" min="5" max="30" value="12" style="width:80px;padding:.35rem .5rem;border:1.5px solid var(--border);border-radius:7px;font-size:.9rem">
+        </div>
+        <div class="form-group" style="margin:0;min-width:120px">
+          <label style="font-size:.8rem">⏸ Pause entre matchs (min)</label>
+          <input id="param-pause" type="number" min="2" max="15" value="5" style="width:80px;padding:.35rem .5rem;border:1.5px solid var(--border);border-radius:7px;font-size:.9rem">
+        </div>
+        <div class="form-group" style="margin:0;min-width:120px">
+          <label style="font-size:.8rem">🕐 Heure de début</label>
+          <input id="param-debut" type="time" value="17:30" style="width:100px;padding:.35rem .5rem;border:1.5px solid var(--border);border-radius:7px;font-size:.9rem">
+        </div>
+        <div class="form-group" style="margin:0;min-width:120px">
+          <label style="font-size:.8rem">🍽 Pause repas début</label>
+          <input id="param-repas-deb" type="time" value="20:30" style="width:100px;padding:.35rem .5rem;border:1.5px solid var(--border);border-radius:7px;font-size:.9rem">
+        </div>
+        <div class="form-group" style="margin:0;min-width:120px">
+          <label style="font-size:.8rem">🍽 Pause repas fin</label>
+          <input id="param-repas-fin" type="time" value="21:30" style="width:100px;padding:.35rem .5rem;border:1.5px solid var(--border);border-radius:7px;font-size:.9rem">
+        </div>
+      </div>
+
       <button class="btn-primary" onclick="genererRencontres()">⚡ Générer tous les matchs</button>
       <p id="gen-msg" class="alert hidden" style="margin-top:.5rem"></p>
       <button class="btn-danger btn-sm super-admin-only" style="margin-top:.5rem" onclick="supprimerTousMatchs()">🗑 Supprimer tous les matchs</button>

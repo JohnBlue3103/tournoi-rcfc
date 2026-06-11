@@ -490,9 +490,15 @@ async function genererRencontres() {
   // Assigner heure / terrain / arbitre sans conflit d'équipe
   const TERRAINS  = ['H1', 'H2', 'K1', 'K2'];
   const ARBITRES  = ['Lucie', 'Fred', 'Audelyne', 'Emmanuel'];
-  const SLOT_MIN  = 17;
-  const PAUSE_DEB = 20 * 60 + 30;
-  const PAUSE_FIN = 21 * 60 + 30;
+  const duree     = parseInt(document.getElementById('param-duree')?.value)  || 12;
+  const pauseMin  = parseInt(document.getElementById('param-pause')?.value)  || 5;
+  const SLOT_MIN  = duree + pauseMin;
+  const debutVal  = document.getElementById('param-debut')?.value  || '17:30';
+  const repasDeb  = document.getElementById('param-repas-deb')?.value || '20:30';
+  const repasFin  = document.getElementById('param-repas-fin')?.value || '21:30';
+  const toMins    = t => { const [h,m]=t.split(':'); return +h*60+ +m; };
+  const PAUSE_DEB = toMins(repasDeb);
+  const PAUSE_FIN = toMins(repasFin);
   const toTime    = m => `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
 
   // Équipes absentes au premier créneau (organisation)
@@ -503,7 +509,7 @@ async function genererRencontres() {
       .map(e => e.id)
   );
 
-  const PREMIER_SLOT = 17 * 60 + 30;
+  const PREMIER_SLOT = toMins(debutVal);
   const teamBusy    = {}; // teamId → Set<mins>
   const terrainUsed = {}; // mins → terrain[]
 

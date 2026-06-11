@@ -13,6 +13,7 @@ const PHASE_LABELS = {
   finale:        'Finale',
   class_5e:      'Match 5e-6e place',
   class_7e:      'Match 7e-8e place',
+  conso_quarts:  'Consolante — Quarts',
   conso_demies:  'Consolante — Demi-finales',
   conso_petite:  'Consolante — Petite finale',
   conso_finale:  'Consolante — Finale',
@@ -183,7 +184,7 @@ function renderAgenda() {
     const list = byPhase['poule_' + g] || [];
     if (list.length) sections.push({ label: `Poule ${g}`, matchs: list, cls: POULE_COLORS[g] || '' });
   });
-  ['quarts','demies','petite_finale','finale','class_5e','class_7e','conso_demies','conso_petite','conso_finale','classement'].forEach(p => {
+  ['quarts','demies','petite_finale','finale','class_5e','class_7e','conso_quarts','conso_demies','conso_petite','conso_finale','classement'].forEach(p => {
     const list = byPhase[p] || [];
     if (list.length) sections.push({ label: PHASE_LABELS[p], matchs: list, cls: 'pt-ko' });
   });
@@ -221,7 +222,7 @@ function renderPhaseFinales() {
 
   const KO       = ['quarts', 'demies', 'petite_finale', 'finale'];
   const CLASS58  = ['class_5e', 'class_7e'];
-  const CONSO    = ['conso_demies', 'conso_petite', 'conso_finale'];
+  const CONSO    = ['conso_quarts', 'conso_demies', 'conso_petite', 'conso_finale'];
   const CLASS    = ['classement'];
   const allPhases = [...KO, ...CLASS58, ...CONSO, ...CLASS];
   const koMatchs = _matchs.filter(m => allPhases.includes(m.phase));

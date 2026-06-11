@@ -386,10 +386,10 @@ function renderBracketAdmin() {
   const SECTIONS = [
     { titre: '🏆 Tableau principal', cls: 'bst-principal', phases: ['quarts','demies','petite_finale','finale'] },
     { titre: '🥉 Classement 5e-8e',  cls: 'bst-class58',   phases: ['class_5e','class_7e'] },
-    { titre: '🥈 Consolante',        cls: 'bst-conso',     phases: ['conso_demies','conso_petite','conso_finale'] },
+    { titre: '🥈 Consolante',        cls: 'bst-conso',     phases: ['conso_quarts','conso_demies','conso_petite','conso_finale'] },
     { titre: '📋 Classement',        cls: 'bst-class',     phases: ['classement'] },
   ];
-  const PHASE_LABELS = { quarts:'Quarts de finale', demies:'Demi-finales', petite_finale:'Petite finale', finale:'Finale', class_5e:'Match 5e-6e place', class_7e:'Match 7e-8e place', conso_demies:'Consolante — Demi-finales', conso_petite:'Consolante — Petite finale', conso_finale:'Consolante — Finale', classement:'Matchs de classement' };
+  const PHASE_LABELS = { quarts:'Quarts de finale', demies:'Demi-finales', petite_finale:'Petite finale', finale:'Finale', class_5e:'Match 5e-6e place', class_7e:'Match 7e-8e place', conso_quarts:'Consolante — Quarts', conso_demies:'Consolante — Demi-finales', conso_petite:'Consolante — Petite finale', conso_finale:'Consolante — Finale', classement:'Matchs de classement' };
   const TERRAINS = ['H1','H2','K1','K2'];
 
   // Calcul heure de début recommandée : fin du dernier match de poule + 45min pause
@@ -509,6 +509,17 @@ async function propagateBracket(m) {
     } else if (idx >= 2 && match7) {
       const slot = idx === 2 ? { equipe1_id: loser } : { equipe2_id: loser };
       await sb.from('matchs').update(slot).eq('id', match7.id);
+    }
+  }
+
+  if (m.phase === 'conso_quarts') {
+    const consoQ = _matchs.filter(q => q.phase === 'conso_quarts').sort(byCreated);
+    const idx    = consoQ.findIndex(q => q.id === m.id);
+    const consoD = _matchs.filter(d => d.phase === 'conso_demies').sort(byCreated);
+    const target = consoD[Math.floor(idx / 2)];
+    if (target) {
+      const slot = idx % 2 === 0 ? { equipe1_id: winner } : { equipe2_id: winner };
+      await sb.from('matchs').update(slot).eq('id', target.id);
     }
   }
 
@@ -659,12 +670,15 @@ async function genererConsolante() {
   if (!_tid) { alert('Sélectionne un tournoi d\'abord.'); return; }
   const msg = document.getElementById('conso-msg');
   await loadMatchsAdmin();
-  const existants = _matchs.filter(m => ['conso_demies','conso_petite','conso_finale'].includes(m.phase));
+  const existants = _matchs.filter(m => ['conso_quarts','conso_demies','conso_petite','conso_finale'].includes(m.phase));
   if (existants.length) { showMsg(msg, 'Consolante déjà générée.', 'error'); return; }
-  const nb = parseInt(document.getElementById('conso-nb').value) || 4;
+  const nb = parseInt(document.getElementById('conso-nb').value) || 8;
   const inserts = [];
-  if (nb === 4) {
-    for (let i = 0; i < 2; i++) inserts.push({ tournament_id: _tid, phase: 'conso_demies',  statut: 'planifie' });
+  if (nb === 8) {
+    for (let i = 0; i < 4; i++) inserts.push({ tournament_id: _tid, phase: 'conso_quarts', statut: 'planifie' });
+  }
+  if (nb >= 4) {
+    for (let i = 0; i < 2; i++) inserts.push({ tournament_id: _tid, phase: 'conso_demies', statut: 'planifie' });
     inserts.push({ tournament_id: _tid, phase: 'conso_petite', statut: 'planifie' });
   }
   inserts.push({ tournament_id: _tid, phase: 'conso_finale', statut: 'planifie' });

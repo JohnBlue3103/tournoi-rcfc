@@ -603,8 +603,9 @@ function renderClassementAdmin() {
   const toutesEquipes = _equipes.filter(e => groupes.includes(e.groupe)).sort((a,b) => (a.groupe||'').localeCompare(b.groupe||'') || a.nom.localeCompare(b.nom));
   el.innerHTML = `
     <div class="bonus-admin-block">
-      <p class="section-title" style="font-size:.95rem;margin-bottom:.5rem">⚥ Bonus filles (par équipe)</p>
-      <p style="font-size:.82rem;color:var(--muted);margin-bottom:.85rem">Attribue 1 à 3 pts bonus à chaque équipe ayant fait jouer une fille. S'applique en fin de tournoi.</p>
+      <p class="section-title" style="font-size:.95rem;margin-bottom:.5rem">⚥ Bonus filles — fin de phase de poules</p>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:.4rem">Le bonus est accordé <strong>uniquement si les féminines ont été présentes sur <u>tous</u> les matchs</strong> de poule.</p>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:.85rem">+1 pt = 1 fille présente sur tous les matchs · +2 pts = 2 filles · +3 pts = 3 filles</p>
       <div class="bonus-admin-grid">
         ${toutesEquipes.map(e => `
           <div class="bonus-admin-row">

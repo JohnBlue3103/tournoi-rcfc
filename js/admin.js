@@ -385,10 +385,11 @@ function renderBracketAdmin() {
 
   const SECTIONS = [
     { titre: '🏆 Tableau principal', cls: 'bst-principal', phases: ['quarts','demies','petite_finale','finale'] },
+    { titre: '🥉 Classement 5e-8e',  cls: 'bst-class58',   phases: ['class_demies','class_5e','class_7e'] },
     { titre: '🥈 Consolante',        cls: 'bst-conso',     phases: ['conso_demies','conso_petite','conso_finale'] },
     { titre: '📋 Classement',        cls: 'bst-class',     phases: ['classement'] },
   ];
-  const PHASE_LABELS = { quarts:'Quarts de finale', demies:'Demi-finales', petite_finale:'Petite finale', finale:'Finale', conso_demies:'Consolante — Demi-finales', conso_petite:'Consolante — Petite finale', conso_finale:'Consolante — Finale', classement:'Matchs de classement' };
+  const PHASE_LABELS = { quarts:'Quarts de finale', demies:'Demi-finales', petite_finale:'Petite finale', finale:'Finale', class_demies:'Classement 5e-8e — Demi-finales', class_5e:'Match pour la 5e place', class_7e:'Match pour la 7e place', conso_demies:'Consolante — Demi-finales', conso_petite:'Consolante — Petite finale', conso_finale:'Consolante — Finale', classement:'Matchs de classement' };
   const TERRAINS = ['H1','H2','K1','K2'];
 
   // Calcul heure de début recommandée : fin du dernier match de poule + 45min pause
@@ -492,12 +493,31 @@ async function propagateBracket(m) {
   if (m.phase === 'quarts') {
     const quarts = _matchs.filter(q => q.phase === 'quarts').sort(byCreated);
     const idx    = quarts.findIndex(q => q.id === m.id);
+    // Gagnant → demies principale
     const demies = _matchs.filter(d => d.phase === 'demies').sort(byCreated);
-    const target = demies[Math.floor(idx / 2)];
-    if (target) {
+    const targetD = demies[Math.floor(idx / 2)];
+    if (targetD) {
       const slot = idx % 2 === 0 ? { equipe1_id: winner } : { equipe2_id: winner };
-      await sb.from('matchs').update(slot).eq('id', target.id);
+      await sb.from('matchs').update(slot).eq('id', targetD.id);
     }
+    // Perdant → class_demies (5e-8e)
+    const classDemies = _matchs.filter(d => d.phase === 'class_demies').sort(byCreated);
+    const targetC = classDemies[Math.floor(idx / 2)];
+    if (targetC) {
+      const slot = idx % 2 === 0 ? { equipe1_id: loser } : { equipe2_id: loser };
+      await sb.from('matchs').update(slot).eq('id', targetC.id);
+    }
+  }
+
+  if (m.phase === 'class_demies') {
+    const classDemies = _matchs.filter(d => d.phase === 'class_demies').sort(byCreated);
+    const idx   = classDemies.findIndex(d => d.id === m.id);
+    const wSlot = idx === 0 ? { equipe1_id: winner } : { equipe2_id: winner };
+    const lSlot = idx === 0 ? { equipe1_id: loser  } : { equipe2_id: loser  };
+    const match5 = _matchs.find(f => f.phase === 'class_5e');
+    const match7 = _matchs.find(f => f.phase === 'class_7e');
+    if (match5) await sb.from('matchs').update(wSlot).eq('id', match5.id);
+    if (match7) await sb.from('matchs').update(lSlot).eq('id', match7.id);
   }
 
   if (m.phase === 'demies') {
@@ -659,6 +679,26 @@ async function genererConsolante() {
   const { error } = await sb.from('matchs').insert(inserts);
   if (error) { showMsg(msg, error.message, 'error'); return; }
   showMsg(msg, `Consolante générée (${nb} équipes) !`, 'success');
+  loadMatchsAdmin();
+}
+
+async function genererClassement5_8() {
+  if (!_tid) { alert('Sélectionne un tournoi d\'abord.'); return; }
+  const msg = document.getElementById('class58-msg');
+  await loadMatchsAdmin();
+  const existants = _matchs.filter(m => ['class_demies','class_5e','class_7e'].includes(m.phase));
+  if (existants.length) { showMsg(msg, 'Classement 5e-8e déjà généré.', 'error'); return; }
+  const quarts = _matchs.filter(m => m.phase === 'quarts');
+  if (!quarts.length) { showMsg(msg, 'Génère d\'abord les quarts de finale.', 'error'); return; }
+  const inserts = [
+    { tournament_id: _tid, phase: 'class_demies', statut: 'planifie' },
+    { tournament_id: _tid, phase: 'class_demies', statut: 'planifie' },
+    { tournament_id: _tid, phase: 'class_5e',     statut: 'planifie' },
+    { tournament_id: _tid, phase: 'class_7e',     statut: 'planifie' },
+  ];
+  const { error } = await sb.from('matchs').insert(inserts);
+  if (error) { showMsg(msg, error.message, 'error'); return; }
+  showMsg(msg, 'Classement 5e-8e généré !', 'success');
   loadMatchsAdmin();
 }
 

@@ -150,6 +150,13 @@
     </div>
 
     <div class="gen-block" style="margin-top:1rem">
+      <p class="section-title" style="margin-bottom:.4rem">🥉 Générer le classement 5e-8e place</p>
+      <p style="font-size:.85rem;color:#666;margin-bottom:.75rem">Les 4 perdants des quarts jouent 2 demi-finales, puis finale 5e place et finale 7e place.</p>
+      <button class="btn-secondary" onclick="genererClassement5_8()">🥉 Générer classement 5e-8e</button>
+      <p id="class58-msg" class="alert hidden" style="margin-top:.5rem"></p>
+    </div>
+
+    <div class="gen-block" style="margin-top:1rem">
       <p class="section-title" style="margin-bottom:.4rem">🥈 Générer la consolante</p>
       <p style="font-size:.85rem;color:#666;margin-bottom:.75rem">Bracket séparé pour les équipes non qualifiées.</p>
       <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap">
@@ -186,6 +193,11 @@
           <option value="demies">Demi-finales</option>
           <option value="petite_finale">Petite finale</option>
           <option value="finale">Finale</option>
+          <optgroup label="Classement 5e-8e">
+            <option value="class_demies">Classement 5e-8e — Demi-finales</option>
+            <option value="class_5e">Match pour la 5e place</option>
+            <option value="class_7e">Match pour la 7e place</option>
+          </optgroup>
           <optgroup label="Consolante">
             <option value="conso_demies">Consolante — Demies</option>
             <option value="conso_petite">Consolante — Petite finale</option>

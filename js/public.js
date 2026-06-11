@@ -11,6 +11,9 @@ const PHASE_LABELS = {
   demies:        'Demi-finales',
   petite_finale: 'Petite finale',
   finale:        'Finale',
+  class_demies:  'Classement 5e-8e — Demi-finales',
+  class_5e:      'Match pour la 5e place',
+  class_7e:      'Match pour la 7e place',
   conso_demies:  'Consolante — Demi-finales',
   conso_petite:  'Consolante — Petite finale',
   conso_finale:  'Consolante — Finale',
@@ -181,7 +184,7 @@ function renderAgenda() {
     const list = byPhase['poule_' + g] || [];
     if (list.length) sections.push({ label: `Poule ${g}`, matchs: list, cls: POULE_COLORS[g] || '' });
   });
-  ['quarts','demies','petite_finale','finale','conso_demies','conso_petite','conso_finale','classement'].forEach(p => {
+  ['quarts','demies','petite_finale','finale','class_demies','class_5e','class_7e','conso_demies','conso_petite','conso_finale','classement'].forEach(p => {
     const list = byPhase[p] || [];
     if (list.length) sections.push({ label: PHASE_LABELS[p], matchs: list, cls: 'pt-ko' });
   });
@@ -217,10 +220,11 @@ function renderPhaseFinales() {
   const wrap  = document.getElementById('tab-phases');
   const eqMap = Object.fromEntries(_equipes.map(e => [e.id, e.nom]));
 
-  const KO      = ['quarts', 'demies', 'petite_finale', 'finale'];
-  const CONSO   = ['conso_demies', 'conso_petite', 'conso_finale'];
-  const CLASS   = ['classement'];
-  const allPhases = [...KO, ...CONSO, ...CLASS];
+  const KO       = ['quarts', 'demies', 'petite_finale', 'finale'];
+  const CLASS58  = ['class_demies', 'class_5e', 'class_7e'];
+  const CONSO    = ['conso_demies', 'conso_petite', 'conso_finale'];
+  const CLASS    = ['classement'];
+  const allPhases = [...KO, ...CLASS58, ...CONSO, ...CLASS];
   const koMatchs = _matchs.filter(m => allPhases.includes(m.phase));
 
   if (!koMatchs.length) {
@@ -250,9 +254,10 @@ function renderPhaseFinales() {
   };
 
   wrap.innerHTML =
-    renderSection(KO,    '🏆 Tableau principal', 'bst-principal') +
-    renderSection(CONSO, '🥈 Consolante',         'bst-conso') +
-    renderSection(CLASS, '📋 Classement',          'bst-class');
+    renderSection(KO,      '🏆 Tableau principal', 'bst-principal') +
+    renderSection(CLASS58, '🥉 Classement 5e-8e',  'bst-class58') +
+    renderSection(CONSO,   '🥈 Consolante',         'bst-conso') +
+    renderSection(CLASS,   '📋 Classement',          'bst-class');
 }
 
 function renderBracketMatch(m, idx, eqMap) {

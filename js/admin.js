@@ -385,11 +385,17 @@ function renderBracketAdmin() {
 
   const SECTIONS = [
     { titre: '🏆 Tableau principal', cls: 'bst-principal', phases: ['quarts','demies','petite_finale','finale'] },
-    { titre: '🥉 Classement 5e-8e',  cls: 'bst-class58',   phases: ['class_5e','class_7e'] },
-    { titre: '🥈 Consolante',        cls: 'bst-conso',     phases: ['conso_quarts','conso_demies','conso_petite','conso_finale'] },
-    { titre: '📋 Classement',        cls: 'bst-class',     phases: ['classement'] },
+    { titre: '🥉 Classement 5e-8e',  cls: 'bst-class58',   phases: ['class_demies','class_5e','class_7e'] },
+    { titre: '🥈 Consolante 9e-12e', cls: 'bst-conso',     phases: ['conso_quarts','conso_demies','conso_petite','conso_finale'] },
+    { titre: '🏅 Classement 13e-16e',cls: 'bst-class',     phases: ['conso_class_demies','conso_class_13','conso_class_15'] },
   ];
-  const PHASE_LABELS = { quarts:'Quarts de finale', demies:'Demi-finales', petite_finale:'Petite finale', finale:'Finale', class_5e:'Match 5e-6e place', class_7e:'Match 7e-8e place', conso_quarts:'Consolante — Quarts', conso_demies:'Consolante — Demi-finales', conso_petite:'Consolante — Petite finale', conso_finale:'Consolante — Finale', classement:'Matchs de classement' };
+  const PHASE_LABELS = {
+    quarts:'Quarts de finale', demies:'Demi-finales', petite_finale:'Petite finale', finale:'Finale',
+    class_demies:'Demi-finales classement 5e-8e', class_5e:'Match 5e-6e place', class_7e:'Match 7e-8e place',
+    conso_quarts:'Consolante — Quarts', conso_demies:'Consolante — Demi-finales', conso_petite:'Consolante — Petite finale', conso_finale:'Consolante — Finale',
+    conso_class_demies:'Classement 13e-16e — Demi-finales', conso_class_13:'Match 13e-14e place', conso_class_15:'Match 15e-16e place',
+    classement:'Matchs de classement',
+  };
   const TERRAINS = ['H1','H2','K1','K2'];
 
   // Calcul heure de début recommandée : fin du dernier match de poule + 45min pause
@@ -500,27 +506,54 @@ async function propagateBracket(m) {
       const slot = idx % 2 === 0 ? { equipe1_id: winner } : { equipe2_id: winner };
       await sb.from('matchs').update(slot).eq('id', targetD.id);
     }
-    // Perdant → class_5e (QF 0&1) ou class_7e (QF 2&3)
+    // Perdant → class_demies (demi-finales 5e-8e)
+    const classDemies = _matchs.filter(d => d.phase === 'class_demies').sort(byCreated);
+    const targetC = classDemies[Math.floor(idx / 2)];
+    if (targetC) {
+      const slot = idx % 2 === 0 ? { equipe1_id: loser } : { equipe2_id: loser };
+      await sb.from('matchs').update(slot).eq('id', targetC.id);
+    }
+  }
+
+  if (m.phase === 'class_demies') {
+    const classDemies = _matchs.filter(d => d.phase === 'class_demies').sort(byCreated);
+    const idx   = classDemies.findIndex(d => d.id === m.id);
+    const wSlot = idx === 0 ? { equipe1_id: winner } : { equipe2_id: winner };
+    const lSlot = idx === 0 ? { equipe1_id: loser  } : { equipe2_id: loser  };
     const match5 = _matchs.find(f => f.phase === 'class_5e');
     const match7 = _matchs.find(f => f.phase === 'class_7e');
-    if (idx < 2 && match5) {
-      const slot = idx === 0 ? { equipe1_id: loser } : { equipe2_id: loser };
-      await sb.from('matchs').update(slot).eq('id', match5.id);
-    } else if (idx >= 2 && match7) {
-      const slot = idx === 2 ? { equipe1_id: loser } : { equipe2_id: loser };
-      await sb.from('matchs').update(slot).eq('id', match7.id);
-    }
+    if (match5) await sb.from('matchs').update(wSlot).eq('id', match5.id);
+    if (match7) await sb.from('matchs').update(lSlot).eq('id', match7.id);
   }
 
   if (m.phase === 'conso_quarts') {
     const consoQ = _matchs.filter(q => q.phase === 'conso_quarts').sort(byCreated);
     const idx    = consoQ.findIndex(q => q.id === m.id);
+    // Gagnant → conso_demies (9e-12e)
     const consoD = _matchs.filter(d => d.phase === 'conso_demies').sort(byCreated);
-    const target = consoD[Math.floor(idx / 2)];
-    if (target) {
+    const targetD = consoD[Math.floor(idx / 2)];
+    if (targetD) {
       const slot = idx % 2 === 0 ? { equipe1_id: winner } : { equipe2_id: winner };
-      await sb.from('matchs').update(slot).eq('id', target.id);
+      await sb.from('matchs').update(slot).eq('id', targetD.id);
     }
+    // Perdant → conso_class_demies (13e-16e)
+    const consoCD = _matchs.filter(d => d.phase === 'conso_class_demies').sort(byCreated);
+    const targetC = consoCD[Math.floor(idx / 2)];
+    if (targetC) {
+      const slot = idx % 2 === 0 ? { equipe1_id: loser } : { equipe2_id: loser };
+      await sb.from('matchs').update(slot).eq('id', targetC.id);
+    }
+  }
+
+  if (m.phase === 'conso_class_demies') {
+    const consoCD = _matchs.filter(d => d.phase === 'conso_class_demies').sort(byCreated);
+    const idx   = consoCD.findIndex(d => d.id === m.id);
+    const wSlot = idx === 0 ? { equipe1_id: winner } : { equipe2_id: winner };
+    const lSlot = idx === 0 ? { equipe1_id: loser  } : { equipe2_id: loser  };
+    const m13 = _matchs.find(f => f.phase === 'conso_class_13');
+    const m15 = _matchs.find(f => f.phase === 'conso_class_15');
+    if (m13) await sb.from('matchs').update(wSlot).eq('id', m13.id);
+    if (m15) await sb.from('matchs').update(lSlot).eq('id', m15.id);
   }
 
   if (m.phase === 'demies') {
@@ -670,12 +703,15 @@ async function genererConsolante() {
   if (!_tid) { alert('Sélectionne un tournoi d\'abord.'); return; }
   const msg = document.getElementById('conso-msg');
   await loadMatchsAdmin();
-  const existants = _matchs.filter(m => ['conso_quarts','conso_demies','conso_petite','conso_finale'].includes(m.phase));
+  const existants = _matchs.filter(m => ['conso_quarts','conso_demies','conso_petite','conso_finale','conso_class_demies','conso_class_13','conso_class_15'].includes(m.phase));
   if (existants.length) { showMsg(msg, 'Consolante déjà générée.', 'error'); return; }
   const nb = parseInt(document.getElementById('conso-nb').value) || 8;
   const inserts = [];
   if (nb === 8) {
-    for (let i = 0; i < 4; i++) inserts.push({ tournament_id: _tid, phase: 'conso_quarts', statut: 'planifie' });
+    for (let i = 0; i < 4; i++) inserts.push({ tournament_id: _tid, phase: 'conso_quarts',       statut: 'planifie' });
+    for (let i = 0; i < 2; i++) inserts.push({ tournament_id: _tid, phase: 'conso_class_demies', statut: 'planifie' });
+    inserts.push({ tournament_id: _tid, phase: 'conso_class_13', statut: 'planifie' });
+    inserts.push({ tournament_id: _tid, phase: 'conso_class_15', statut: 'planifie' });
   }
   if (nb >= 4) {
     for (let i = 0; i < 2; i++) inserts.push({ tournament_id: _tid, phase: 'conso_demies', statut: 'planifie' });
@@ -692,13 +728,15 @@ async function genererClassement5_8() {
   if (!_tid) { alert('Sélectionne un tournoi d\'abord.'); return; }
   const msg = document.getElementById('class58-msg');
   await loadMatchsAdmin();
-  const existants = _matchs.filter(m => ['class_5e','class_7e'].includes(m.phase));
+  const existants = _matchs.filter(m => ['class_demies','class_5e','class_7e'].includes(m.phase));
   if (existants.length) { showMsg(msg, 'Classement 5e-8e déjà généré.', 'error'); return; }
   const quarts = _matchs.filter(m => m.phase === 'quarts');
   if (!quarts.length) { showMsg(msg, 'Génère d\'abord les quarts de finale.', 'error'); return; }
   const inserts = [
-    { tournament_id: _tid, phase: 'class_5e', statut: 'planifie' },
-    { tournament_id: _tid, phase: 'class_7e', statut: 'planifie' },
+    { tournament_id: _tid, phase: 'class_demies', statut: 'planifie' },
+    { tournament_id: _tid, phase: 'class_demies', statut: 'planifie' },
+    { tournament_id: _tid, phase: 'class_5e',     statut: 'planifie' },
+    { tournament_id: _tid, phase: 'class_7e',     statut: 'planifie' },
   ];
   const { error } = await sb.from('matchs').insert(inserts);
   if (error) { showMsg(msg, error.message, 'error'); return; }
